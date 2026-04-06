@@ -1,5 +1,3 @@
-const { createApp } = window.Vue;
-
 const METRIC_CONFIG = [
   { key: "economy", label: "Economy", barClass: "bg-green" },
   { key: "mobility", label: "Mobility", barClass: "bg-red" },
@@ -140,7 +138,7 @@ function mergeEffects(target, effects = {}) {
   });
 }
 
-createApp({
+export default {
   data() {
     return {
       cityLibrary: [],
@@ -302,7 +300,7 @@ createApp({
       this.cityLibrary = cities;
       this.initiativeLibrary = initiatives;
       this.eventLibrary = events;
-      this.activeCityId = this.cityLibrary[0]?.id || null;
+      this.activeCityId = this.cityLibrary.find((city) => city.id === "lagos")?.id || this.cityLibrary[0]?.id || null;
       this.state = this.activeCityId ? this.createState(this.activeCityId) : null;
       this.displayedMetrics = this.state ? { ...this.state.metrics } : null;
       this.applyCityTheme();
@@ -903,7 +901,10 @@ createApp({
                 Grow a city without breaking it.
               </h2>
               <p class="mt-6 max-w-3xl text-xl font-medium leading-10 text-[#d0c9bc]">
-                Pick a Nigerian city, work through ten rounds of budget pressure and civic shocks, and leave behind either a legacy front page or a federal takeover notice.
+                Pick a Nigerian city and work through ten rounds of budget pressure, civic shocks, and hard public trade-offs.
+              </p>
+              <p class="mt-4 max-w-3xl text-2xl font-extrabold leading-tight text-[#f7f1e6] md:text-3xl">
+                Leave behind either a legacy front page or a federal takeover notice.
               </p>
               <div class="mt-8 flex flex-wrap gap-4">
                 <button
@@ -912,7 +913,7 @@ createApp({
                   :style="{ backgroundColor: currentTheme.soft, color: currentTheme.accent }"
                   @click="startCampaign()"
                 >
-                  Start with {{ activeCity ? activeCity.name : 'a city' }}
+                  Start with Lagos
                 </button>
                 <button
                   type="button"
@@ -1372,4 +1373,4 @@ createApp({
       </div>
     </div>
   `,
-}).mount("#app");
+};

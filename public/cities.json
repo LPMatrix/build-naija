@@ -1,0 +1,724 @@
+[
+  {
+    "id": "aba",
+    "name": "Aba",
+    "summary": "Fast-growing southwestern city with strong trade and service activity. Mobility, housing demand, and service delivery need steady attention.",
+    "resources": ["Trade", "Education", "Markets", "Services"],
+    "metrics": {
+      "budget": 60,
+      "trust": 55,
+      "economy": 60,
+      "mobility": 46,
+      "housing": 50,
+      "resilience": 48,
+      "environment": 50,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "housing", "health", "vocational", "waste"],
+    "events": ["market-boom", "rent-strike", "migration-surge"]
+  },
+  {
+    "id": "abakaliki",
+    "name": "Abakaliki",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "jobs": -2, "mobility": -1, "housing": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "abeokuta",
+    "name": "Abeokuta",
+    "summary": "Fast-growing southwestern city with strong trade and service activity. Mobility, housing demand, and service delivery need steady attention.",
+    "resources": ["Trade", "Education", "Markets", "Services"],
+    "metrics": {
+      "budget": 60,
+      "trust": 55,
+      "economy": 60,
+      "mobility": 46,
+      "housing": 50,
+      "resilience": 48,
+      "environment": 50,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "housing", "health", "vocational", "waste"],
+    "events": ["market-boom", "rent-strike", "migration-surge"]
+  },
+  {
+    "id": "abuja",
+    "name": "Abuja",
+    "summary": "Administrative center with strong formal-sector activity and visible public expectations. Rapid growth puts pressure on land, movement, and affordability.",
+    "resources": ["Public sector", "Services", "Real estate", "Institutions"],
+    "metrics": {
+      "budget": 68,
+      "trust": 50,
+      "economy": 66,
+      "mobility": 42,
+      "housing": 43,
+      "resilience": 54,
+      "environment": 47,
+      "jobs": 60
+    },
+    "drift": { "housing": -2, "mobility": -2, "trust": -1, "budget": 5 },
+    "initiatives": ["transit", "housing", "waste", "health", "tech-hubs", "roads"],
+    "events": ["investment-wave", "rent-strike", "federal-grant"]
+  },
+  {
+    "id": "ado-ekiti",
+    "name": "Ado Ekiti",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "akure",
+    "name": "Akure",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "asaba",
+    "name": "Asaba",
+    "summary": "Coastal city with shipping, tourism, and service potential. Flood risk, waste systems, and uneven infrastructure shape the development challenge.",
+    "resources": ["Ports", "Tourism", "Fisheries", "Services"],
+    "metrics": {
+      "budget": 55,
+      "trust": 54,
+      "economy": 56,
+      "mobility": 45,
+      "housing": 49,
+      "resilience": 42,
+      "environment": 46,
+      "jobs": 52
+    },
+    "drift": { "resilience": -2, "environment": -2, "housing": -1, "budget": 3 },
+    "initiatives": ["drainage", "waste", "markets", "housing", "health", "roads"],
+    "events": ["coastal-flood", "investment-wave", "migration-surge"]
+  },
+  {
+    "id": "awka",
+    "name": "Awka",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "jobs": -2, "mobility": -1, "housing": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "bauchi",
+    "name": "Bauchi",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "benin-city",
+    "name": "Benin City",
+    "summary": "Fast-growing southwestern city with strong trade and service activity. Mobility, housing demand, and service delivery need steady attention.",
+    "resources": ["Trade", "Education", "Markets", "Services"],
+    "metrics": {
+      "budget": 60,
+      "trust": 55,
+      "economy": 60,
+      "mobility": 46,
+      "housing": 50,
+      "resilience": 48,
+      "environment": 50,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "housing", "health", "vocational", "waste"],
+    "events": ["market-boom", "rent-strike", "migration-surge"]
+  },
+  {
+    "id": "birnin-kebbi",
+    "name": "Birnin Kebbi",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "calabar",
+    "name": "Calabar",
+    "summary": "Coastal city with shipping, tourism, and service potential. Flood risk, waste systems, and uneven infrastructure shape the development challenge.",
+    "resources": ["Ports", "Tourism", "Fisheries", "Services"],
+    "metrics": {
+      "budget": 55,
+      "trust": 54,
+      "economy": 56,
+      "mobility": 45,
+      "housing": 49,
+      "resilience": 42,
+      "environment": 46,
+      "jobs": 52
+    },
+    "drift": { "resilience": -2, "environment": -2, "housing": -1, "budget": 3 },
+    "initiatives": ["drainage", "waste", "markets", "housing", "health", "roads"],
+    "events": ["coastal-flood", "investment-wave", "migration-surge"]
+  },
+  {
+    "id": "damaturu",
+    "name": "Damaturu",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "dutse",
+    "name": "Dutse",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "enugu",
+    "name": "Enugu",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "jobs": -2, "mobility": -1, "housing": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "gombe",
+    "name": "Gombe",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "gusau",
+    "name": "Gusau",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "ibadan",
+    "name": "Ibadan",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "ilorin",
+    "name": "Ilorin",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "jalingo",
+    "name": "Jalingo",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "jos",
+    "name": "Jos",
+    "summary": "Plateau city with tourism, agriculture, and education strengths. Stability, mobility, and fair service delivery shape the route to stronger growth.",
+    "resources": ["Tourism", "Agriculture", "Education", "Mining"],
+    "metrics": {
+      "budget": 53,
+      "trust": 55,
+      "economy": 51,
+      "mobility": 49,
+      "housing": 50,
+      "resilience": 54,
+      "environment": 57,
+      "jobs": 50
+    },
+    "drift": { "economy": -1, "jobs": -1, "mobility": -1, "budget": 3 },
+    "initiatives": ["roads", "water", "health", "markets", "vocational", "housing"],
+    "events": ["market-boom", "community-protest", "migration-surge"]
+  },
+  {
+    "id": "kaduna",
+    "name": "Kaduna",
+    "summary": "Historic northern trade center with strong commercial culture and market depth, but water security and industrial productivity remain delicate.",
+    "resources": ["Trade routes", "Textiles", "Agro-processing", "Markets"],
+    "metrics": {
+      "budget": 57,
+      "trust": 55,
+      "economy": 56,
+      "mobility": 48,
+      "housing": 53,
+      "resilience": 46,
+      "environment": 49,
+      "jobs": 52
+    },
+    "drift": { "resilience": -2, "environment": -1, "mobility": -1, "budget": 3 },
+    "initiatives": ["industrial-power", "markets", "vocational", "water", "roads", "health"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "kano",
+    "name": "Kano",
+    "summary": "Historic northern trade center with strong commercial culture and market depth, but water security and industrial productivity remain delicate.",
+    "resources": ["Trade routes", "Textiles", "Agro-processing", "Markets"],
+    "metrics": {
+      "budget": 58,
+      "trust": 55,
+      "economy": 57,
+      "mobility": 48,
+      "housing": 53,
+      "resilience": 46,
+      "environment": 49,
+      "jobs": 51
+    },
+    "drift": { "resilience": -2, "environment": -1, "mobility": -1, "budget": 3 },
+    "initiatives": ["industrial-power", "markets", "vocational", "water", "roads", "health"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "katsina",
+    "name": "Katsina",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "lafia",
+    "name": "Lafia",
+    "summary": "Balanced regional city with agriculture, education, and some tourism or mining potential. Good fundamentals exist, but growth needs coordination and trust.",
+    "resources": ["Agriculture", "Education", "Minerals", "Tourism"],
+    "metrics": {
+      "budget": 51,
+      "trust": 54,
+      "economy": 52,
+      "mobility": 47,
+      "housing": 50,
+      "resilience": 49,
+      "environment": 51,
+      "jobs": 49
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "health", "vocational", "water", "housing", "markets"],
+    "events": ["migration-surge", "market-boom", "community-protest"]
+  },
+  {
+    "id": "lagos",
+    "name": "Lagos",
+    "summary": "Commercial powerhouse with deep talent and revenue potential, but congestion, housing stress, and flood pressure stay close behind growth.",
+    "resources": ["Ports", "Finance", "Creative industry", "Tech talent"],
+    "metrics": {
+      "budget": 72,
+      "trust": 52,
+      "economy": 74,
+      "mobility": 33,
+      "housing": 38,
+      "resilience": 41,
+      "environment": 35,
+      "jobs": 68
+    },
+    "drift": { "mobility": -3, "housing": -2, "environment": -2, "trust": -1, "budget": 5 },
+    "initiatives": ["transit", "housing", "drainage", "waste", "tech-hubs", "markets"],
+    "events": ["coastal-flood", "investment-wave", "rent-strike"]
+  },
+  {
+    "id": "lokoja",
+    "name": "Lokoja",
+    "summary": "Balanced regional city with agriculture, education, and some tourism or mining potential. Good fundamentals exist, but growth needs coordination and trust.",
+    "resources": ["Agriculture", "Education", "Minerals", "Tourism"],
+    "metrics": {
+      "budget": 51,
+      "trust": 54,
+      "economy": 52,
+      "mobility": 47,
+      "housing": 50,
+      "resilience": 49,
+      "environment": 51,
+      "jobs": 49
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "health", "vocational", "water", "housing", "markets"],
+    "events": ["migration-surge", "market-boom", "community-protest"]
+  },
+  {
+    "id": "maiduguri",
+    "name": "Maiduguri",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  },
+  {
+    "id": "makurdi",
+    "name": "Makurdi",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "minna",
+    "name": "Minna",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "mobility": -1, "economy": -1, "resilience": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "osogbo",
+    "name": "Osogbo",
+    "summary": "Fast-growing southwestern city with strong trade and service activity. Mobility, housing demand, and service delivery need steady attention.",
+    "resources": ["Trade", "Education", "Markets", "Services"],
+    "metrics": {
+      "budget": 60,
+      "trust": 55,
+      "economy": 60,
+      "mobility": 46,
+      "housing": 50,
+      "resilience": 48,
+      "environment": 50,
+      "jobs": 55
+    },
+    "drift": { "housing": -1, "mobility": -2, "environment": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "housing", "health", "vocational", "waste"],
+    "events": ["market-boom", "rent-strike", "migration-surge"]
+  },
+  {
+    "id": "owerri",
+    "name": "Owerri",
+    "summary": "Education and service center with strong talent potential. The challenge is turning skills and culture into broad-based jobs and better urban systems.",
+    "resources": ["Universities", "SMEs", "Services", "Culture"],
+    "metrics": {
+      "budget": 56,
+      "trust": 58,
+      "economy": 58,
+      "mobility": 48,
+      "housing": 51,
+      "resilience": 50,
+      "environment": 54,
+      "jobs": 55
+    },
+    "drift": { "jobs": -2, "mobility": -1, "housing": -1, "budget": 3 },
+    "initiatives": ["tech-hubs", "vocational", "housing", "roads", "health", "waste"],
+    "events": ["investment-wave", "migration-surge", "market-boom"]
+  },
+  {
+    "id": "port-harcourt",
+    "name": "Port Harcourt",
+    "summary": "Energy-linked city with serious revenue upside, but pollution, distrust, and uneven infrastructure can undermine every gain.",
+    "resources": ["Energy", "Ports", "Engineering talent", "Petrochemicals"],
+    "metrics": {
+      "budget": 64,
+      "trust": 44,
+      "economy": 61,
+      "mobility": 45,
+      "housing": 50,
+      "resilience": 40,
+      "environment": 30,
+      "jobs": 56
+    },
+    "drift": { "environment": -3, "trust": -2, "resilience": -1, "budget": 4 },
+    "initiatives": ["cleanup", "industrial-power", "health", "drainage", "housing", "skills"],
+    "events": ["oil-spill", "federal-grant", "community-protest"]
+  },
+  {
+    "id": "sokoto",
+    "name": "Sokoto",
+    "summary": "Historic northern trade center with strong commercial culture and market depth, but water security and industrial productivity remain delicate.",
+    "resources": ["Trade routes", "Textiles", "Agro-processing", "Markets"],
+    "metrics": {
+      "budget": 57,
+      "trust": 55,
+      "economy": 56,
+      "mobility": 48,
+      "housing": 53,
+      "resilience": 46,
+      "environment": 49,
+      "jobs": 52
+    },
+    "drift": { "resilience": -2, "environment": -1, "mobility": -1, "budget": 3 },
+    "initiatives": ["industrial-power", "markets", "vocational", "water", "roads", "health"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "umuahia",
+    "name": "Umuahia",
+    "summary": "Agriculture-linked inland city with room to grow through logistics, processing, and better local services, but infrastructure gaps slow momentum.",
+    "resources": ["Agriculture", "Warehousing", "Markets", "Transport links"],
+    "metrics": {
+      "budget": 52,
+      "trust": 57,
+      "economy": 50,
+      "mobility": 46,
+      "housing": 52,
+      "resilience": 48,
+      "environment": 52,
+      "jobs": 50
+    },
+    "drift": { "jobs": -2, "mobility": -1, "housing": -1, "budget": 3 },
+    "initiatives": ["roads", "markets", "water", "vocational", "health", "housing"],
+    "events": ["dry-season", "market-boom", "migration-surge"]
+  },
+  {
+    "id": "uyo",
+    "name": "Uyo",
+    "summary": "Coastal city with shipping, tourism, and service potential. Flood risk, waste systems, and uneven infrastructure shape the development challenge.",
+    "resources": ["Ports", "Tourism", "Fisheries", "Services"],
+    "metrics": {
+      "budget": 55,
+      "trust": 54,
+      "economy": 56,
+      "mobility": 45,
+      "housing": 49,
+      "resilience": 42,
+      "environment": 46,
+      "jobs": 52
+    },
+    "drift": { "resilience": -2, "environment": -2, "housing": -1, "budget": 3 },
+    "initiatives": ["drainage", "waste", "markets", "housing", "health", "roads"],
+    "events": ["coastal-flood", "investment-wave", "migration-surge"]
+  },
+  {
+    "id": "yenagoa",
+    "name": "Yenagoa",
+    "summary": "Energy-linked city with serious revenue upside, but pollution, distrust, and uneven infrastructure can undermine every gain.",
+    "resources": ["Energy", "Ports", "Engineering talent", "Petrochemicals"],
+    "metrics": {
+      "budget": 58,
+      "trust": 44,
+      "economy": 61,
+      "mobility": 45,
+      "housing": 50,
+      "resilience": 40,
+      "environment": 33,
+      "jobs": 56
+    },
+    "drift": { "environment": -3, "trust": -2, "resilience": -1, "budget": 4 },
+    "initiatives": ["cleanup", "industrial-power", "health", "drainage", "housing", "skills"],
+    "events": ["oil-spill", "federal-grant", "community-protest"]
+  },
+  {
+    "id": "yola",
+    "name": "Yola",
+    "summary": "Fast-changing frontier city where resilience, basic services, and inclusive growth matter as much as headline investment numbers.",
+    "resources": ["Agriculture", "Public sector", "Trade", "Resilient enterprise"],
+    "metrics": {
+      "budget": 46,
+      "trust": 47,
+      "economy": 45,
+      "mobility": 44,
+      "housing": 49,
+      "resilience": 43,
+      "environment": 46,
+      "jobs": 46
+    },
+    "drift": { "resilience": -2, "economy": -2, "jobs": -1, "budget": 2 },
+    "initiatives": ["water", "health", "roads", "markets", "vocational", "housing"],
+    "events": ["dry-season", "migration-surge", "community-protest"]
+  }
+]
