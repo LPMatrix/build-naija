@@ -11,7 +11,7 @@ const METRIC_CONFIG = [
 
 const TRACKED_METRICS = ["economy", "mobility", "housing", "resilience", "environment", "jobs", "trust", "budget"];
 const START_YEAR = 2026;
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 4;
 const REGION_ORDER = ["North West", "North East", "North Central", "South West", "South East", "South South"];
 
 const DEFAULT_THEME = {
@@ -166,7 +166,7 @@ export default {
       return this.activeCity ? getCityMeta(this.activeCity.id) : { state: "", region: "" };
     },
     roundLabel() {
-      return this.state ? `Round ${this.state.round} of ${TOTAL_ROUNDS}` : "";
+      return this.state ? `Year ${this.state.round} of ${TOTAL_ROUNDS}` : "";
     },
     currentTheme() {
       return this.activeCity ? this.getCityTheme(this.activeCity.id) : DEFAULT_THEME;
@@ -198,7 +198,7 @@ export default {
       return [
         { label: "Playable cities", value: this.cityLibrary.length },
         { label: "Regions", value: REGION_ORDER.length },
-        { label: "Rounds per term", value: TOTAL_ROUNDS },
+        { label: "Years per term", value: TOTAL_ROUNDS },
         { label: "Average readiness", value: `${this.nationalAverageScore}/100` },
       ];
     },
@@ -455,7 +455,7 @@ export default {
       return {
         title: `${city.name} enters a fragile balance`,
         body: "The city has room to grow, but core systems are not yet strong enough to carry stress without consequences.",
-        summary: `Your first round in ${meta.state} will set the tone for everything that follows.`,
+        summary: `Your first year in ${meta.state} will set the tone for everything that follows.`,
         verdict: "The city is balanced on potential, not certainty.",
       };
     },
@@ -562,7 +562,7 @@ export default {
       if (this.state.selectedInitiatives.length >= 2) {
         this.state.currentAlert = {
           title: "Planning cap reached",
-          body: "You can only push two major initiatives in a single round.",
+          body: "You can only push two major initiatives in a single year.",
           summary: "Drop one selected initiative before adding another.",
         };
         return;
@@ -650,7 +650,7 @@ export default {
       const parts = Object.entries(delta)
         .filter(([, value]) => value !== 0)
         .map(([key, value]) => `${prettyMetricName(key)} ${value > 0 ? "+" : ""}${value}`);
-      return parts.length > 0 ? `${parts.join(", ")}.` : "No measurable shift this round.";
+      return parts.length > 0 ? `${parts.join(", ")}.` : "No measurable shift this year.";
     },
     buildVerdict(roundDelta, metrics) {
       const positives = ["economy", "jobs", "trust", "resilience"].filter((key) => roundDelta[key] > 0);
@@ -660,7 +660,7 @@ export default {
       if (metrics.resilience < 30 || metrics.environment < 30) return "Growth is no longer the story; fragility is.";
       if (positives.length >= 3 && negatives.length === 0) return "For the first time in a while, the city feels like it is on your side.";
       if (positives.length >= 2 && negatives.length >= 2) return "Progress landed, but it came with visible bruises.";
-      if (positives.length === 0 && negatives.length >= 2) return "This round felt like the city pushing back.";
+      if (positives.length === 0 && negatives.length >= 2) return "This year felt like the city pushing back.";
       return "The city is moving, but not yet in one clear direction.";
     },
     buildLegacyVerdict(metrics) {
@@ -775,7 +775,7 @@ export default {
       if (mode === "receivership") {
         return `Build Naija: I drove ${this.activeCity.name} into federal receivership. Final score ${this.finalScore}/100. Budget ${clampMetric(this.state.metrics.budget)}, Trust ${clampMetric(this.state.metrics.trust)}.`;
       }
-      return `Build Naija: I finished a ${TOTAL_ROUNDS}-round term in ${this.activeCity.name} with score ${this.finalScore}/100. Strongest systems: ${this.legacyStrongest.map(prettyMetricName).join(" and ")}. Weakest: ${this.legacyWeakest.map(prettyMetricName).join(" and ")}.`;
+        return `Build Naija: I finished a ${TOTAL_ROUNDS}-year term in ${this.activeCity.name} with score ${this.finalScore}/100. Strongest systems: ${this.legacyStrongest.map(prettyMetricName).join(" and ")}. Weakest: ${this.legacyWeakest.map(prettyMetricName).join(" and ")}.`;
     },
     advanceRound() {
       if (this.state.gameOver) {
@@ -784,7 +784,7 @@ export default {
       const previousMetrics = { ...this.state.metrics };
       const roundDelta = createMetricDelta();
       let alert = {
-        title: "Round review",
+        title: "Year review",
         body: "Your planning package lands across the city.",
         summary: "Momentum shifts, but not every system moves in the same direction.",
       };
@@ -792,7 +792,7 @@ export default {
       if (this.state.selectedInitiatives.length === 0) {
         this.applyEffectsToState({ trust: -3, economy: -2 }, [roundDelta]);
         alert = {
-          title: "A quiet round costs momentum",
+          title: "A quiet year costs momentum",
           body: "Holding back preserves options, but people and businesses notice when the agenda slows.",
           summary: "Trust -3, Economy -2.",
         };
@@ -845,7 +845,7 @@ export default {
         this.state.endMode = "legacy";
         this.state.currentAlert = {
           title: "Campaign complete",
-          body: `You guided ${this.activeCity.name} through ${TOTAL_ROUNDS} rounds of trade-offs and pressure.`,
+          body: `You guided ${this.activeCity.name} through ${TOTAL_ROUNDS} years of trade-offs and pressure.`,
           summary: `Final balance score ${this.finalScore}/100.`,
         };
         this.state.currentVerdict = this.buildLegacyVerdict(this.state.metrics);
@@ -901,7 +901,7 @@ export default {
                 Grow a city without breaking it.
               </h2>
               <p class="mt-6 max-w-3xl text-xl font-medium leading-10 text-[#d0c9bc]">
-                Pick a Nigerian city and work through ten rounds of budget pressure, civic shocks, and hard public trade-offs.
+                Pick a Nigerian city and work through four years of budget pressure, civic shocks, and hard public trade-offs.
               </p>
               <p class="mt-4 max-w-3xl text-2xl font-extrabold leading-tight text-[#f7f1e6] md:text-3xl">
                 Leave behind either a legacy front page or a federal takeover notice.
@@ -1029,7 +1029,7 @@ export default {
         </div>
       </main>
 
-      <div v-else-if="state" class="min-h-screen pb-28">
+      <div v-else-if="state" class="min-h-screen pb-[9.5rem] md:pb-[8.5rem]">
       <div
         class="pointer-events-none fixed inset-0 z-40 opacity-0"
         :class="{ 'screen-flash': flashActive }"
@@ -1111,7 +1111,7 @@ export default {
         </div>
       </section>
 
-      <main class="relative z-10 mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-7">
+      <main class="relative z-10 mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-7 pb-14 md:pb-20">
         <section class="mb-8">
           <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-3xl">
@@ -1139,7 +1139,7 @@ export default {
             <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-[#4e4b46]">
               <div class="h-full" :class="metric.barClass" :style="{ width: metricBarWidth(metric.value) }"></div>
             </div>
-            <p class="mt-4 text-[0.95rem] font-semibold" :class="metric.deltaClass">{{ metric.deltaPrefix }}{{ metric.delta }} this round</p>
+            <p class="mt-4 text-[0.95rem] font-semibold" :class="metric.deltaClass">{{ metric.deltaPrefix }}{{ metric.delta }} this year</p>
             <p v-if="metric.isDanger" class="mt-3 text-[0.82rem] font-bold uppercase tracking-[0.14em] text-[#ff8a7b]">Critical pressure</p>
           </article>
         </section>
@@ -1160,14 +1160,14 @@ export default {
         </section>
 
         <section class="mt-5">
-          <p class="text-sm uppercase tracking-[0.22em] text-[#958f84]">Round verdict</p>
+          <p class="text-sm uppercase tracking-[0.22em] text-[#958f84]">Year verdict</p>
           <p class="mt-2 text-2xl font-semibold leading-tight text-[#f0eadf]">{{ state.currentVerdict }}</p>
         </section>
 
         <section v-if="historyVisible && recentHistory.length > 0" class="mt-8 rounded-[1.6rem] border border-[#3e3c37] bg-[#1e1d1a] px-6 py-5">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
-              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#989286]">Round history</p>
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#989286]">Year history</p>
               <p class="mt-1 text-lg font-semibold text-[#f3ede3]">A scannable record of what you did and what happened.</p>
             </div>
             <button type="button" class="rounded-full border border-[#55524d] px-4 py-2 text-sm font-semibold text-[#d8d1c5]" @click="historyVisible = false">Hide</button>
@@ -1175,7 +1175,7 @@ export default {
           <div class="grid gap-3 lg:grid-cols-2">
             <article v-for="entry in recentHistory" :key="entry.round" class="rounded-[1.2rem] border border-[#403d39] bg-[#252420] p-4">
               <div class="flex items-center justify-between gap-3">
-                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">Round {{ entry.round }}</p>
+                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">Year {{ entry.round }}</p>
                 <p class="text-xs font-semibold text-[#b7b0a4]">{{ entry.initiatives.length }} initiative{{ entry.initiatives.length === 1 ? '' : 's' }}</p>
               </div>
               <p class="mt-2 text-lg font-semibold text-[#f3ede3]">{{ entry.alert.title }}</p>
@@ -1226,7 +1226,7 @@ export default {
                       {{ metric.label }} {{ metric.from }}→{{ metric.to }}
                     </span>
                   </div>
-                  <p v-if="initiative.isLocked" class="mt-3 text-sm font-semibold text-[#d39e97]">Cooldown active. Available in {{ initiative.cooldown }} {{ initiative.cooldown === 1 ? 'round' : 'rounds' }}.</p>
+                  <p v-if="initiative.isLocked" class="mt-3 text-sm font-semibold text-[#d39e97]">Cooldown active. Available in {{ initiative.cooldown }} {{ initiative.cooldown === 1 ? 'year' : 'years' }}.</p>
                   <p v-else-if="initiative.preview.budgetWarning" class="mt-3 text-sm font-semibold text-[#ffb372]">{{ initiative.preview.budgetWarning }}</p>
                 </div>
               </div>
@@ -1276,10 +1276,10 @@ export default {
                   </div>
                 </div>
                 <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Last rounds before collapse</p>
+                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Last years before collapse</p>
                   <div class="mt-4 space-y-4">
                     <div v-for="entry in recentHistory.slice(0, 3)" :key="'collapse-' + entry.round" class="border-l-2 border-[#8a3330] pl-4">
-                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#d6897f]">Round {{ entry.round }}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#d6897f]">Year {{ entry.round }}</p>
                       <p class="mt-1 text-lg font-semibold text-[#f7e8e2]">{{ entry.alert.title }}</p>
                       <p class="mt-1 text-sm leading-7 text-[#d8b6b0]">{{ entry.verdict }}</p>
                     </div>
@@ -1343,7 +1343,7 @@ export default {
                   <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Key moments</p>
                   <div class="mt-4 space-y-4">
                     <div v-for="entry in recentHistory.slice(0, 4)" :key="'legacy-' + entry.round" class="border-l-2 border-[#b48d3f] pl-4">
-                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#8a6c39]">Round {{ entry.round }}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#8a6c39]">Year {{ entry.round }}</p>
                       <p class="mt-1 text-lg font-semibold">{{ entry.alert.title }}</p>
                       <p class="mt-1 text-sm leading-7 text-[#5d4d37]">{{ entry.verdict }}</p>
                     </div>
@@ -1366,7 +1366,7 @@ export default {
             :disabled="state.gameOver"
             @click="advanceRound"
           >
-            {{ state.gameOver ? 'Campaign complete' : 'End round ↗' }}
+            {{ state.gameOver ? 'Campaign complete' : 'End year ↗' }}
           </button>
         </div>
       </footer>
