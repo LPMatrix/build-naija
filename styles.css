@@ -243,6 +243,13 @@ h2 {
   gap: 1rem;
 }
 
+.city-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 64rem;
+  overflow: auto;
+  padding-right: 0.35rem;
+}
+
 .city-card,
 .initiative-card,
 .metric-card,
@@ -508,6 +515,11 @@ h2 {
   .metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .city-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -529,7 +541,8 @@ h2 {
   }
 
   .metrics-grid,
-  .panel-stats {
+  .panel-stats,
+  .city-list {
     grid-template-columns: 1fr;
   }
 

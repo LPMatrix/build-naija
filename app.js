@@ -1,62 +1,4 @@
-const CITY_LIBRARY = [
-  {
-    id: "lagos",
-    name: "Lagos",
-    summary:
-      "Commercial powerhouse with deep talent and huge tax potential, but congestion, housing stress, and flood pressure are always close by.",
-    resources: ["Ports", "Finance", "Creative industry", "Tech talent"],
-    metrics: {
-      budget: 72,
-      trust: 52,
-      economy: 74,
-      mobility: 33,
-      housing: 38,
-      resilience: 41,
-      environment: 35,
-      jobs: 68,
-    },
-    initiatives: ["transit", "housing", "drainage", "waste", "tech-hubs", "markets"],
-    events: ["coastal-flood", "investment-wave", "rent-strike"],
-  },
-  {
-    id: "kano",
-    name: "Kano",
-    summary:
-      "Historic trading city with manufacturing and market depth. Water security, logistics, and youth employment shape the path ahead.",
-    resources: ["Textiles", "Trade routes", "Agro-processing", "Markets"],
-    metrics: {
-      budget: 58,
-      trust: 56,
-      economy: 57,
-      mobility: 47,
-      housing: 52,
-      resilience: 45,
-      environment: 48,
-      jobs: 51,
-    },
-    initiatives: ["industrial-power", "markets", "vocational", "water", "roads", "health"],
-    events: ["dry-season", "market-boom", "migration-surge"],
-  },
-  {
-    id: "port-harcourt",
-    name: "Port Harcourt",
-    summary:
-      "Energy-rich and strategically important, with strong revenue potential. Pollution, public distrust, and infrastructure inequality complicate growth.",
-    resources: ["Energy", "Ports", "Engineering talent", "Petrochemicals"],
-    metrics: {
-      budget: 66,
-      trust: 41,
-      economy: 62,
-      mobility: 44,
-      housing: 49,
-      resilience: 39,
-      environment: 28,
-      jobs: 55,
-    },
-    initiatives: ["cleanup", "industrial-power", "health", "drainage", "housing", "skills"],
-    events: ["oil-spill", "federal-grant", "community-protest"],
-  },
-];
+let CITY_LIBRARY = [];
 
 const INITIATIVE_LIBRARY = {
   transit: {
@@ -382,10 +324,11 @@ const elements = {
   heroCitySummary: document.querySelector("#hero-city-summary"),
   heroBudget: document.querySelector("#hero-budget"),
   heroTrust: document.querySelector("#hero-trust"),
+  cityCount: document.querySelector("#city-count"),
 };
 
-let activeCityId = CITY_LIBRARY[0].id;
-let state = createState(activeCityId);
+let activeCityId = null;
+let state = null;
 
 function createState(cityId) {
   const city = CITY_LIBRARY.find((entry) => entry.id === cityId);
@@ -409,6 +352,9 @@ function createState(cityId) {
 }
 
 function render() {
+  if (!state) {
+    return;
+  }
   const city = getActiveCity();
   renderCityCards(city);
   renderHero(city);
@@ -724,4 +670,35 @@ elements.resetButton.addEventListener("click", () => {
   render();
 });
 
-render();
+async function loadCities() {
+  const response = await fetch("./cities.json");
+  if (!response.ok) {
+    throw new Error(`Failed to load cities.json: ${response.status}`);
+  }
+
+  const cities = await response.json();
+  return cities.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+async function init() {
+  try {
+    CITY_LIBRARY = await loadCities();
+    activeCityId = CITY_LIBRARY[0]?.id ?? null;
+    state = activeCityId ? createState(activeCityId) : null;
+    elements.cityCount.textContent = `${CITY_LIBRARY.length} cities`;
+    render();
+  } catch (error) {
+    elements.cityCount.textContent = "City data unavailable";
+    elements.headlineEvent.innerHTML = `
+      <h3>City data could not load</h3>
+      <p>Build Naija now reads cities from <code>cities.json</code>. Open the app through a local web server so the browser can fetch the data file.</p>
+    `;
+    elements.advanceButton.disabled = true;
+    elements.resetButton.disabled = true;
+    elements.cityList.innerHTML = "";
+    elements.initiativeList.innerHTML = "";
+    console.error(error);
+  }
+}
+
+init();
