@@ -1,352 +1,102 @@
 let CITY_LIBRARY = [];
-
-const INITIATIVE_LIBRARY = {
-  transit: {
-    id: "transit",
-    title: "Bus Rapid Transit Expansion",
-    description:
-      "Create dedicated lanes and modern bus terminals to move more people faster across the city.",
-    cost: 18,
-    time: "2 years",
-    effects: {
-      mobility: 15,
-      economy: 6,
-      trust: 5,
-      budget: -10,
-      environment: 3,
-    },
-    tradeOff: "Fast mobility gains, but eats a large slice of capital budget.",
-  },
-  housing: {
-    id: "housing",
-    title: "Mixed-Income Housing Program",
-    description:
-      "Unlock land, support densification, and co-fund affordable housing near job clusters.",
-    cost: 16,
-    time: "3 years",
-    effects: {
-      housing: 16,
-      trust: 6,
-      jobs: 5,
-      budget: -9,
-      environment: -3,
-    },
-    tradeOff: "Improves inclusion and housing pressure, but can trigger land and infrastructure stress.",
-  },
-  drainage: {
-    id: "drainage",
-    title: "Drainage and Flood Defense",
-    description:
-      "Upgrade drainage channels, desilt waterways, and expand flood defense in vulnerable districts.",
-    cost: 14,
-    time: "2 years",
-    effects: {
-      resilience: 16,
-      trust: 4,
-      environment: 6,
-      budget: -8,
-      economy: -2,
-    },
-    tradeOff: "Protects long-term growth, but the wins are less visible than shiny new projects.",
-  },
-  waste: {
-    id: "waste",
-    title: "Waste Collection Overhaul",
-    description:
-      "Improve collection routes, sorting hubs, and enforcement against illegal dumping.",
-    cost: 9,
-    time: "1 year",
-    effects: {
-      environment: 12,
-      trust: 5,
-      resilience: 5,
-      budget: -5,
-    },
-    tradeOff: "Low glamour, high impact. Keeps the city healthier but rarely excites investors.",
-  },
-  "tech-hubs": {
-    id: "tech-hubs",
-    title: "Startup and Innovation District",
-    description:
-      "Create serviced workspaces, small grants, and talent pipelines for high-growth firms.",
-    cost: 12,
-    time: "2 years",
-    effects: {
-      economy: 12,
-      jobs: 8,
-      trust: -2,
-      budget: -7,
-      housing: -3,
-    },
-    tradeOff: "Strong growth story, but can deepen inequality if basics are ignored.",
-  },
-  markets: {
-    id: "markets",
-    title: "Market Modernisation",
-    description:
-      "Upgrade stalls, storage, sanitation, and access roads for informal and formal trade hubs.",
-    cost: 10,
-    time: "1 year",
-    effects: {
-      economy: 8,
-      jobs: 10,
-      trust: 4,
-      budget: -6,
-      mobility: 2,
-    },
-    tradeOff: "Boosts everyday commerce quickly, but can stall if traffic and utilities stay weak.",
-  },
-  "industrial-power": {
-    id: "industrial-power",
-    title: "Power Reliability for Industry",
-    description:
-      "Support captive power, mini-grids, and substation upgrades for factories and industrial clusters.",
-    cost: 15,
-    time: "2 years",
-    effects: {
-      economy: 14,
-      jobs: 7,
-      resilience: 5,
-      budget: -9,
-      environment: -4,
-    },
-    tradeOff: "Unlocks production and jobs, but the wrong energy mix can worsen emissions.",
-  },
-  vocational: {
-    id: "vocational",
-    title: "Vocational Skills Push",
-    description:
-      "Expand technical training in construction, fabrication, logistics, and digital operations.",
-    cost: 8,
-    time: "1 year",
-    effects: {
-      jobs: 12,
-      economy: 5,
-      trust: 4,
-      budget: -4,
-    },
-    tradeOff: "Builds long-term earning power, but needs follow-through from employers to stick.",
-  },
-  water: {
-    id: "water",
-    title: "Water Security Upgrade",
-    description:
-      "Expand borehole networks, treatment systems, and distribution upgrades in underserved areas.",
-    cost: 13,
-    time: "2 years",
-    effects: {
-      resilience: 11,
-      trust: 8,
-      health: 8,
-      budget: -7,
-      economy: 2,
-    },
-    tradeOff: "Essential for public health and resilience, though it competes with more visible spending.",
-  },
-  roads: {
-    id: "roads",
-    title: "Inner-City Road Rehabilitation",
-    description:
-      "Repair critical roads and junctions connecting markets, schools, and residential zones.",
-    cost: 11,
-    time: "1 year",
-    effects: {
-      mobility: 9,
-      economy: 6,
-      trust: 3,
-      budget: -6,
-      environment: -2,
-    },
-    tradeOff: "Popular and practical, but road-first strategy can become an expensive trap.",
-  },
-  health: {
-    id: "health",
-    title: "Primary Health Access",
-    description:
-      "Upgrade local clinics, recruit staff, and improve medicine availability in dense communities.",
-    cost: 10,
-    time: "1 year",
-    effects: {
-      trust: 9,
-      resilience: 6,
-      jobs: 3,
-      budget: -6,
-    },
-    tradeOff: "Citizens feel the benefit fast, but financial return is indirect and slower.",
-  },
-  cleanup: {
-    id: "cleanup",
-    title: "Pollution Cleanup and Monitoring",
-    description:
-      "Fund cleanup teams, water testing, and environmental enforcement in heavily impacted areas.",
-    cost: 12,
-    time: "2 years",
-    effects: {
-      environment: 17,
-      trust: 6,
-      resilience: 4,
-      budget: -7,
-      economy: -2,
-    },
-    tradeOff: "Repairs damage and builds legitimacy, but may constrain extractive activity in the short term.",
-  },
-  skills: {
-    id: "skills",
-    title: "Youth Employment Compact",
-    description:
-      "Blend apprenticeships, SME support, and placement incentives for unemployed young adults.",
-    cost: 9,
-    time: "1 year",
-    effects: {
-      jobs: 11,
-      trust: 7,
-      economy: 5,
-      budget: -5,
-    },
-    tradeOff: "Raises optimism quickly, but weak business conditions can limit the payoff.",
-  },
-};
-
-const EVENT_LIBRARY = {
-  "coastal-flood": {
-    title: "Coastal flooding surges again",
-    body: "Heavy rains test waterfront neighborhoods and expose weak drainage corridors.",
-    apply: (state) => {
-      const penalty = state.metrics.resilience < 55 ? -10 : -4;
-      state.metrics.resilience += penalty;
-      state.metrics.trust -= 4;
-      state.metrics.budget -= 3;
-      state.metrics.environment -= 2;
-    },
-  },
-  "investment-wave": {
-    title: "Investors circle the city",
-    body: "Fresh interest from logistics and tech firms lifts sentiment around future growth.",
-    apply: (state) => {
-      state.metrics.economy += 8;
-      state.metrics.jobs += 5;
-      state.metrics.housing -= 3;
-    },
-  },
-  "rent-strike": {
-    title: "Housing pressure sparks protests",
-    body: "Rent increases trigger public anger and put your urban agenda under scrutiny.",
-    apply: (state) => {
-      state.metrics.trust -= 7;
-      state.metrics.housing -= 5;
-      state.metrics.economy -= 2;
-    },
-  },
-  "dry-season": {
-    title: "A harsh dry season hits supply chains",
-    body: "Water stress raises costs for households and manufacturers alike.",
-    apply: (state) => {
-      state.metrics.resilience -= 7;
-      state.metrics.economy -= 4;
-      state.metrics.trust -= 3;
-    },
-  },
-  "market-boom": {
-    title: "Regional trade picks up",
-    body: "Stronger market activity gives local commerce and transport operators a lift.",
-    apply: (state) => {
-      state.metrics.economy += 7;
-      state.metrics.jobs += 6;
-      state.metrics.mobility -= 2;
-    },
-  },
-  "migration-surge": {
-    title: "New arrivals strain city services",
-    body: "Population growth expands the labour pool but adds pressure to housing and roads.",
-    apply: (state) => {
-      state.metrics.jobs += 2;
-      state.metrics.housing -= 6;
-      state.metrics.mobility -= 4;
-    },
-  },
-  "oil-spill": {
-    title: "Fresh spill damages public confidence",
-    body: "Communities demand faster cleanup as pollution worsens around key corridors.",
-    apply: (state) => {
-      state.metrics.environment -= 10;
-      state.metrics.trust -= 6;
-      state.metrics.budget -= 2;
-    },
-  },
-  "federal-grant": {
-    title: "Federal support lands",
-    body: "A major grant eases pressure on the treasury and unlocks stalled improvements.",
-    apply: (state) => {
-      state.metrics.budget += 12;
-      state.metrics.trust += 3;
-      state.metrics.resilience += 4;
-    },
-  },
-  "community-protest": {
-    title: "Community groups push back",
-    body: "Residents demand fairer access to services and better communication on new projects.",
-    apply: (state) => {
-      state.metrics.trust -= 8;
-      state.metrics.housing -= 2;
-      state.metrics.jobs -= 2;
-    },
-  },
-};
+let INITIATIVE_LIBRARY = {};
+let EVENT_LIBRARY = {};
 
 const METRIC_CONFIG = [
-  { key: "budget", label: "Budget", unit: "bn" },
-  { key: "trust", label: "Public trust", unit: "%" },
-  { key: "economy", label: "Economy", unit: "%" },
-  { key: "jobs", label: "Jobs", unit: "%" },
-  { key: "mobility", label: "Mobility", unit: "%" },
-  { key: "housing", label: "Housing", unit: "%" },
-  { key: "resilience", label: "Resilience", unit: "%" },
-  { key: "environment", label: "Environment", unit: "%" },
+  { key: "economy", label: "Economy", barClass: "bg-green" },
+  { key: "mobility", label: "Mobility", barClass: "bg-red" },
+  { key: "housing", label: "Housing", barClass: "bg-amber" },
+  { key: "resilience", label: "Resilience", barClass: "bg-teal" },
+  { key: "environment", label: "Environment", barClass: "bg-red" },
+  { key: "jobs", label: "Jobs", barClass: "bg-green" },
+  { key: "trust", label: "Trust", barClass: "bg-amber" },
+  { key: "budget", label: "Budget", barClass: "bg-green", currency: true },
 ];
 
+const TRACKED_METRICS = ["economy", "mobility", "housing", "resilience", "environment", "jobs", "trust", "budget"];
 const START_YEAR = 2026;
-const END_YEAR = 2038;
+const TOTAL_ROUNDS = 10;
+
+const CITY_META = {
+  aba: { state: "Abia", region: "South East" },
+  abakaliki: { state: "Ebonyi", region: "South East" },
+  abeokuta: { state: "Ogun", region: "South West" },
+  abuja: { state: "FCT", region: "North Central" },
+  "ado-ekiti": { state: "Ekiti", region: "South West" },
+  akure: { state: "Ondo", region: "South West" },
+  asaba: { state: "Delta", region: "South South" },
+  awka: { state: "Anambra", region: "South East" },
+  bauchi: { state: "Bauchi", region: "North East" },
+  "benin-city": { state: "Edo", region: "South South" },
+  "birnin-kebbi": { state: "Kebbi", region: "North West" },
+  calabar: { state: "Cross River", region: "South South" },
+  damaturu: { state: "Yobe", region: "North East" },
+  dutse: { state: "Jigawa", region: "North West" },
+  enugu: { state: "Enugu", region: "South East" },
+  gombe: { state: "Gombe", region: "North East" },
+  gusau: { state: "Zamfara", region: "North West" },
+  ibadan: { state: "Oyo", region: "South West" },
+  ilorin: { state: "Kwara", region: "North Central" },
+  jalingo: { state: "Taraba", region: "North East" },
+  jos: { state: "Plateau", region: "North Central" },
+  kaduna: { state: "Kaduna", region: "North West" },
+  kano: { state: "Kano", region: "North West" },
+  katsina: { state: "Katsina", region: "North West" },
+  lafia: { state: "Nasarawa", region: "North Central" },
+  lagos: { state: "Lagos", region: "South West" },
+  lokoja: { state: "Kogi", region: "North Central" },
+  maiduguri: { state: "Borno", region: "North East" },
+  makurdi: { state: "Benue", region: "North Central" },
+  minna: { state: "Niger", region: "North Central" },
+  osogbo: { state: "Osun", region: "South West" },
+  owerri: { state: "Imo", region: "South East" },
+  "port-harcourt": { state: "Rivers", region: "South South" },
+  sokoto: { state: "Sokoto", region: "North West" },
+  umuahia: { state: "Abia", region: "South East" },
+  uyo: { state: "Akwa Ibom", region: "South South" },
+  yenagoa: { state: "Bayelsa", region: "South South" },
+  yola: { state: "Adamawa", region: "North East" },
+};
 
 const elements = {
-  cityList: document.querySelector("#city-list"),
-  metricsGrid: document.querySelector("#metrics-grid"),
-  resourceList: document.querySelector("#resource-list"),
-  initiativeList: document.querySelector("#initiative-list"),
-  yearDisplay: document.querySelector("#year-display"),
-  scoreDisplay: document.querySelector("#score-display"),
-  selectionSummary: document.querySelector("#selection-summary"),
-  adviceList: document.querySelector("#advice-list"),
-  eventLog: document.querySelector("#event-log"),
-  headlineEvent: document.querySelector("#headline-event"),
-  advanceButton: document.querySelector("#advance-turn"),
-  resetButton: document.querySelector("#reset-game"),
+  citySelect: document.querySelector("#city-select"),
+  citySelectMobile: document.querySelector("#city-select-mobile"),
+  roundDisplay: document.querySelector("#round-display"),
+  cityMeta: document.querySelector("#city-meta"),
   heroCityName: document.querySelector("#hero-city-name"),
   heroCitySummary: document.querySelector("#hero-city-summary"),
-  heroBudget: document.querySelector("#hero-budget"),
-  heroTrust: document.querySelector("#hero-trust"),
-  cityCount: document.querySelector("#city-count"),
+  budgetPill: document.querySelector("#budget-pill"),
+  metricsGrid: document.querySelector("#metrics-grid"),
+  eventBanner: document.querySelector("#event-banner"),
+  initiativeList: document.querySelector("#initiative-list"),
+  selectionStatus: document.querySelector("#selection-status"),
+  advanceButton: document.querySelector("#advance-turn"),
 };
 
 let activeCityId = null;
 let state = null;
 
+function createMetricDelta() {
+  return TRACKED_METRICS.reduce((accumulator, key) => {
+    accumulator[key] = 0;
+    return accumulator;
+  }, {});
+}
+
 function createState(cityId) {
-  const city = CITY_LIBRARY.find((entry) => entry.id === cityId);
+  const city = getCityById(cityId);
   return {
     cityId,
-    year: START_YEAR,
+    round: 1,
+    gameOver: false,
     selectedInitiatives: [],
-    metrics: { ...city.metrics, health: 50 },
-    history: [
-      {
-        year: START_YEAR,
-        title: `${city.name} planning desk opens`,
-        body: city.summary,
-      },
-    ],
-    headline: {
-      title: "Your first brief is ready",
-      body: "Study the city's strengths, choose up to two moves, and try not to chase growth at the expense of balance.",
+    usedEvents: [],
+    metrics: { ...city.metrics },
+    lastRoundDelta: createMetricDelta(),
+    currentAlert: {
+      title: "Planning desk opens",
+      body: city.summary,
+      summary: "Pick one or two initiatives to start shifting the city's balance.",
     },
   };
 }
@@ -355,112 +105,122 @@ function render() {
   if (!state) {
     return;
   }
+
   const city = getActiveCity();
-  renderCityCards(city);
+  renderCitySelectors();
   renderHero(city);
   renderMetrics();
-  renderResources(city);
+  renderAlert();
   renderInitiatives(city);
-  renderSelectionSummary();
-  renderInsights();
-  elements.yearDisplay.textContent = state.year;
-  elements.scoreDisplay.textContent = `${calculateScore()}/100`;
-  elements.advanceButton.disabled = state.year >= END_YEAR;
-  elements.advanceButton.textContent =
-    state.year >= END_YEAR ? "Campaign complete" : "Simulate next year";
+  renderFooter();
+  elements.roundDisplay.textContent = `Round ${state.round} of ${TOTAL_ROUNDS}`;
+  elements.advanceButton.disabled = state.gameOver;
+  elements.advanceButton.textContent = state.gameOver ? "Campaign complete" : "End round ↗";
 }
 
-function renderCityCards(activeCity) {
-  elements.cityList.innerHTML = CITY_LIBRARY.map((city) => {
-    const classes = ["city-card"];
-    if (city.id === activeCity.id) {
-      classes.push("active");
-    }
-
-    return `
-      <button class="${classes.join(" ")}" type="button" data-city-id="${city.id}">
-        <h3>${city.name}</h3>
-        <p>${city.summary}</p>
-        <div class="city-footer">
-          <span>Budget ${city.metrics.budget}bn</span>
-          <span>Trust ${city.metrics.trust}%</span>
-          <span>Economy ${city.metrics.economy}%</span>
-        </div>
-      </button>
-    `;
+function renderCitySelectors() {
+  const options = CITY_LIBRARY.map((city) => {
+    const meta = getCityMeta(city.id);
+    const selected = city.id === activeCityId ? "selected" : "";
+    return `<option value="${city.id}" ${selected}>${city.name} · ${meta.state}</option>`;
   }).join("");
 
-  elements.cityList.querySelectorAll("[data-city-id]").forEach((button) => {
-    button.addEventListener("click", () => {
-      activeCityId = button.dataset.cityId;
-      state = createState(activeCityId);
-      render();
-    });
-  });
+  elements.citySelect.innerHTML = options;
+  elements.citySelectMobile.innerHTML = options;
 }
 
 function renderHero(city) {
+  const meta = getCityMeta(city.id);
+  elements.cityMeta.textContent = `${meta.state} · ${meta.region} · ${city.resources.join(" · ")}`;
   elements.heroCityName.textContent = city.name;
   elements.heroCitySummary.textContent = city.summary;
-  elements.heroBudget.textContent = `₦${Math.max(0, Math.round(state.metrics.budget))}bn`;
-  elements.heroTrust.textContent = `${clampMetric(state.metrics.trust)}%`;
+  elements.budgetPill.textContent = `₦${clampMetric(state.metrics.budget)}B budget`;
 }
 
 function renderMetrics() {
   elements.metricsGrid.innerHTML = METRIC_CONFIG.map((metric) => {
-    const rawValue = state.metrics[metric.key];
-    const displayValue = metric.key === "budget"
-      ? `₦${Math.max(0, Math.round(rawValue))}${metric.unit}`
-      : `${clampMetric(rawValue)}${metric.unit}`;
-    const fillValue = metric.key === "budget"
-      ? Math.min(Math.max(rawValue, 0), 100)
-      : clampMetric(rawValue);
+    const value = clampMetric(state.metrics[metric.key]);
+    const delta = state.lastRoundDelta[metric.key] ?? 0;
+    const deltaClass = delta > 0 ? "text-green" : delta < 0 ? "text-red" : "text-[#aaa396]";
+    const deltaPrefix = delta > 0 ? "+" : "";
+
     return `
-      <article class="metric-card">
-        <span class="metric-label">${metric.label}</span>
-        <strong class="metric-value">${displayValue}</strong>
-        <div class="metric-bar" aria-hidden="true">
-          <div class="metric-fill" style="width: ${fillValue}%"></div>
+      <article class="rounded-[1.35rem] bg-card px-6 py-5">
+        <p class="text-[1.05rem] font-semibold uppercase tracking-[0.05em] text-[#cfc8bc]">${metric.label}</p>
+        <p class="mt-1 text-5xl font-semibold leading-none text-[#f7f3eb]">${value}</p>
+        <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-[#4e4b46]">
+          <div class="h-full ${metric.barClass}" style="width:${Math.max(0, Math.min(value, 100))}%"></div>
         </div>
+        <p class="mt-4 text-[0.95rem] font-semibold ${deltaClass}">${deltaPrefix}${delta} this round</p>
       </article>
     `;
   }).join("");
 }
 
-function renderResources(city) {
-  elements.resourceList.innerHTML = city.resources
-    .map((resource) => `<span class="resource-tag">${resource}</span>`)
-    .join("");
+function renderAlert() {
+  elements.eventBanner.innerHTML = `
+    <div class="flex gap-4">
+      <div class="pt-1 text-3xl text-[#e29a00]">⚡</div>
+      <div>
+        <h3 class="text-2xl font-semibold text-[#7e4a0d]">${state.currentAlert.title}</h3>
+        <p class="mt-2 text-[1.05rem] font-medium leading-8 text-[#955c11]">${state.currentAlert.body}</p>
+        <p class="mt-1 text-[1.05rem] font-semibold leading-8 text-[#955c11]">${state.currentAlert.summary}</p>
+      </div>
+    </div>
+  `;
 }
 
 function renderInitiatives(city) {
-  const availableInitiatives = city.initiatives.map((id) => INITIATIVE_LIBRARY[id]);
-  elements.initiativeList.innerHTML = availableInitiatives.map((initiative) => {
+  const initiatives = city.initiatives
+    .map((id) => INITIATIVE_LIBRARY[id])
+    .filter(Boolean);
+
+  elements.initiativeList.innerHTML = initiatives.map((initiative) => {
     const isSelected = state.selectedInitiatives.includes(initiative.id);
-    const effects = Object.entries(initiative.effects)
-      .filter(([key]) => key !== "health")
-      .slice(0, 4)
-      .map(([key, value]) => {
-        const sign = value > 0 ? "+" : "";
-        return `<span>${prettyMetricName(key)} ${sign}${value}</span>`;
-      })
+    const effectEntries = Object.entries(initiative.effects);
+    const positiveBadges = effectEntries
+      .filter(([, value]) => value > 0)
+      .slice(0, 2)
+      .map(([key]) => renderEffectBadge(`+${shortMetricName(key)}`, true))
       .join("");
+    const negativeBadges = effectEntries
+      .filter(([, value]) => value < 0)
+      .slice(0, 2)
+      .map(([key]) => renderEffectBadge(`-${shortMetricName(key)}`, false))
+      .join("");
+    const cardClasses = isSelected
+      ? "border-[#9cca33] bg-[#dde7c9] text-[#f4f0e6]"
+      : "border-[#4a4843] bg-card text-[#f4f0e6]";
+    const titleColor = isSelected ? "text-[#f7f3eb]" : "text-[#f7f3eb]";
+    const bodyColor = isSelected ? "text-[#c8c2b6]" : "text-[#c8c2b6]";
+    const toggleLabel = isSelected ? "Selected" : "Select";
+    const toggleClass = isSelected
+      ? "border-[#9cca33] bg-[#dfe8c6] text-[#395d0c]"
+      : "border-[#5c5a55] bg-transparent text-[#f3eee4]";
 
     return `
-      <article class="initiative-card">
-        <div class="initiative-topline">
-          <div>
-            <p class="initiative-meta">Cost ₦${initiative.cost}bn · ${initiative.time}</p>
-            <h3>${initiative.title}</h3>
+      <article class="flex min-h-[212px] flex-col justify-between rounded-[1.35rem] border ${cardClasses} px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <div>
+          <div class="mb-3 flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-[2rem] font-semibold leading-tight ${titleColor}">${initiative.title}</h3>
+            </div>
+            <button
+              type="button"
+              data-initiative-id="${initiative.id}"
+              class="rounded-full border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 ${toggleClass}"
+            >
+              ${toggleLabel}
+            </button>
           </div>
-          <button class="toggle-button ${isSelected ? "active" : ""}" type="button" data-initiative-id="${initiative.id}">
-            ${isSelected ? "Selected" : "Add plan"}
-          </button>
+          <p class="max-w-3xl text-[1.05rem] font-medium leading-9 ${bodyColor}">${initiative.description}</p>
         </div>
-        <p class="initiative-text">${initiative.description}</p>
-        <div class="initiative-impact">${effects}</div>
-        <div class="initiative-footer">
-          <span>${initiative.tradeOff}</span>
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <span class="rounded-full bg-[#f1dfd8] px-4 py-2 text-[0.95rem] font-bold text-[#a84b22]">₦${initiative.cost}B</span>
+          <div class="flex flex-wrap items-center gap-2">
+            ${positiveBadges}
+            ${negativeBadges}
+          </div>
         </div>
       </article>
     `;
@@ -471,134 +231,182 @@ function renderInitiatives(city) {
   });
 }
 
-function renderSelectionSummary() {
-  const selections = state.selectedInitiatives.map((id) => INITIATIVE_LIBRARY[id]);
-  if (selections.length === 0) {
-    elements.selectionSummary.innerHTML = "No moves selected yet. Pick one or two initiatives before simulating the year.";
-    return;
-  }
-
-  const totalCost = selections.reduce((sum, item) => sum + item.cost, 0);
-  elements.selectionSummary.innerHTML = `
-    ${selections.map((item) => `<span class="selection-chip">${item.title}</span>`).join("")}
-    <span class="selection-chip">Total cost ₦${totalCost}bn</span>
-  `;
+function renderFooter() {
+  const count = state.selectedInitiatives.length;
+  const label = count === 1 ? "initiative" : "initiatives";
+  elements.selectionStatus.textContent = `${count} of 2 ${label} selected`;
 }
 
-function renderInsights() {
-  elements.headlineEvent.innerHTML = `
-    <h3>${state.headline.title}</h3>
-    <p>${state.headline.body}</p>
-  `;
-
-  const advice = generateAdvice();
-  elements.adviceList.innerHTML = advice.map((item) => `<li>${item}</li>`).join("");
-
-  elements.eventLog.innerHTML = [...state.history]
-    .reverse()
-    .map((entry) => `
-      <article class="event-item">
-        <span class="event-year">${entry.year}</span>
-        <h3>${entry.title}</h3>
-        <p>${entry.body}</p>
-      </article>
-    `)
-    .join("");
+function renderEffectBadge(label, positive) {
+  const classes = positive
+    ? "bg-[#e4efcf] text-[#447313]"
+    : "bg-[#f3dddd] text-[#b3362d]";
+  return `<span class="rounded-full px-3 py-1.5 text-[0.95rem] font-semibold ${classes}">${label}</span>`;
 }
 
 function toggleInitiative(id) {
-  const isSelected = state.selectedInitiatives.includes(id);
-  if (isSelected) {
-    state.selectedInitiatives = state.selectedInitiatives.filter((item) => item !== id);
-  } else {
-    if (state.selectedInitiatives.length >= 2) {
-      state.headline = {
-        title: "Planning cap reached",
-        body: "You can only push two major initiatives in a single year. Drop one before adding another.",
-      };
-      render();
-      return;
-    }
-    state.selectedInitiatives = [...state.selectedInitiatives, id];
-  }
-  render();
-}
-
-function advanceYear() {
-  if (state.year >= END_YEAR) {
+  if (state.gameOver) {
     return;
   }
 
-  if (state.selectedInitiatives.length === 0) {
-    state.headline = {
-      title: "A quiet year costs momentum",
-      body: "Doing nothing preserves cash, but citizens and businesses notice when plans stall.",
-    };
-    state.metrics.trust -= 3;
-    state.metrics.economy -= 2;
+  const isSelected = state.selectedInitiatives.includes(id);
+  if (isSelected) {
+    state.selectedInitiatives = state.selectedInitiatives.filter((entry) => entry !== id);
+    render();
+    return;
   }
 
-  const selections = state.selectedInitiatives.map((id) => INITIATIVE_LIBRARY[id]);
-  selections.forEach((initiative) => {
-    applyEffects(initiative.effects);
-    state.history.push({
-      year: state.year,
-      title: initiative.title,
-      body: initiative.tradeOff,
-    });
-  });
+  if (state.selectedInitiatives.length >= 2) {
+    state.currentAlert = {
+      title: "Planning cap reached",
+      body: "You can only push two major initiatives in a single round.",
+      summary: "Drop one selected initiative before adding another.",
+    };
+    render();
+    return;
+  }
 
-  applyPassiveDrift();
+  state.selectedInitiatives = [...state.selectedInitiatives, id];
+  render();
+}
+
+function advanceRound() {
+  if (state.gameOver) {
+    return;
+  }
+
+  const roundDelta = createMetricDelta();
+  let alert = {
+    title: "Round review",
+    body: "Your planning package lands across the city.",
+    summary: "Momentum shifts, but not every system moves in the same direction.",
+  };
+
+  if (state.selectedInitiatives.length === 0) {
+    applyEffectsToState({ trust: -3, economy: -2 }, [roundDelta]);
+    alert = {
+      title: "A quiet round costs momentum",
+      body: "Holding back preserves options, but people and businesses notice when the agenda slows.",
+      summary: "Trust -3, Economy -2.",
+    };
+  }
+
+  state.selectedInitiatives
+    .map((id) => INITIATIVE_LIBRARY[id])
+    .filter(Boolean)
+    .forEach((initiative) => {
+      applyEffectsToState(initiative.effects, [roundDelta]);
+    });
+
+  applyPassiveDrift(roundDelta);
 
   const event = rollEvent();
   if (event) {
-    event.apply(state);
-    state.headline = {
+    const eventDelta = createMetricDelta();
+    applyConditionalEffects(event.conditionalEffects || [], [roundDelta, eventDelta]);
+    applyEffectsToState(event.effects || {}, [roundDelta, eventDelta]);
+    alert = {
       title: event.title,
       body: event.body,
+      summary: buildDeltaSummary(eventDelta),
     };
-    state.history.push({
-      year: state.year + 1,
-      title: event.title,
-      body: event.body,
-    });
   }
 
   normaliseMetrics();
+  state.lastRoundDelta = roundDelta;
+  state.currentAlert = alert;
   state.selectedInitiatives = [];
-  state.year += 1;
 
-  if (state.year >= END_YEAR) {
-    state.headline = {
-      title: "Campaign complete",
-      body: `You guided ${getActiveCity().name} to a final balance score of ${calculateScore()}/100. Restart the city or try a different one to compare outcomes.`,
+  if (state.metrics.budget <= 0) {
+    state.gameOver = true;
+    state.currentAlert = {
+      title: "Federal receivership",
+      body: `${getActiveCity().name} has run out of money. The federal government has stepped in to manage the city's finances.`,
+      summary: "The campaign ends here.",
     };
+  } else if (state.round >= TOTAL_ROUNDS) {
+    state.gameOver = true;
+    state.currentAlert = {
+      title: "Campaign complete",
+      body: `You guided ${getActiveCity().name} through ${TOTAL_ROUNDS} rounds of trade-offs and pressure.`,
+      summary: `Final balance score ${calculateScore()}/100.`,
+    };
+  } else {
+    state.round += 1;
   }
 
   render();
 }
 
-function applyEffects(effects) {
+function applyEffectsToState(effects, deltaTrackers = []) {
   Object.entries(effects).forEach(([key, value]) => {
     if (typeof state.metrics[key] !== "number") {
       state.metrics[key] = 50;
     }
+
     state.metrics[key] += value;
+    deltaTrackers.forEach((tracker) => {
+      if (typeof tracker[key] !== "number") {
+        tracker[key] = 0;
+      }
+      tracker[key] += value;
+    });
   });
 }
 
-function applyPassiveDrift() {
-  state.metrics.budget += 4;
-  state.metrics.economy += 1;
-  state.metrics.housing -= 1;
-  state.metrics.mobility -= 1;
-  state.metrics.environment -= 1;
+function applyConditionalEffects(conditionalEffects, deltaTrackers = []) {
+  for (const condition of conditionalEffects) {
+    if (!condition.metric) {
+      applyEffectsToState(condition.effects || {}, deltaTrackers);
+      return;
+    }
+
+    const metricValue = state.metrics[condition.metric] ?? 0;
+    if (matchesCondition(metricValue, condition.operator, condition.value)) {
+      applyEffectsToState(condition.effects || {}, deltaTrackers);
+      return;
+    }
+  }
+}
+
+function matchesCondition(metricValue, operator, expectedValue) {
+  switch (operator) {
+    case "<":
+      return metricValue < expectedValue;
+    case "<=":
+      return metricValue <= expectedValue;
+    case ">":
+      return metricValue > expectedValue;
+    case ">=":
+      return metricValue >= expectedValue;
+    case "===":
+      return metricValue === expectedValue;
+    default:
+      return false;
+  }
+}
+
+function applyPassiveDrift(roundDelta) {
+  const city = getActiveCity();
+  const drift = city.drift || {};
+  applyEffectsToState(drift, [roundDelta]);
 }
 
 function rollEvent() {
   const city = getActiveCity();
-  const pool = city.events.map((id) => EVENT_LIBRARY[id]);
-  return pool[Math.floor(Math.random() * pool.length)];
+  let pool = city.events
+    .map((id) => EVENT_LIBRARY[id])
+    .filter(Boolean)
+    .filter((event) => !state.usedEvents.includes(event.id));
+
+  if (pool.length === 0) {
+    state.usedEvents = [];
+    pool = city.events.map((id) => EVENT_LIBRARY[id]).filter(Boolean);
+  }
+
+  const event = pool[Math.floor(Math.random() * pool.length)];
+  if (event) state.usedEvents.push(event.id);
+  return event;
 }
 
 function normaliseMetrics() {
@@ -607,68 +415,79 @@ function normaliseMetrics() {
       state.metrics[key] = Math.max(0, Math.min(state.metrics[key], 100));
       return;
     }
+
     state.metrics[key] = clampMetric(state.metrics[key]);
   });
+}
+
+function buildDeltaSummary(delta) {
+  const parts = Object.entries(delta)
+    .filter(([, value]) => value !== 0)
+    .map(([key, value]) => `${prettyMetricName(key)} ${value > 0 ? "+" : ""}${value}`);
+
+  return parts.length > 0 ? `${parts.join(", ")}.` : "No measurable shift this round.";
+}
+
+function calculateScore() {
+  const total = TRACKED_METRICS.reduce((sum, key) => sum + clampMetric(state.metrics[key]), 0);
+  return Math.round(total / TRACKED_METRICS.length);
 }
 
 function clampMetric(value) {
   return Math.max(0, Math.min(Math.round(value), 100));
 }
 
-function calculateScore() {
-  const tracked = ["trust", "economy", "jobs", "mobility", "housing", "resilience", "environment"];
-  const total = tracked.reduce((sum, key) => sum + clampMetric(state.metrics[key]), 0);
-  const budgetWeight = Math.min(Math.max(state.metrics.budget, 0), 100);
-  return Math.round((total + budgetWeight) / 8);
-}
-
 function prettyMetricName(key) {
-  const map = {
-    budget: "Budget",
-    trust: "Trust",
+  const labels = {
     economy: "Economy",
     mobility: "Mobility",
     housing: "Housing",
     resilience: "Resilience",
     environment: "Environment",
     jobs: "Jobs",
-    health: "Health",
+    trust: "Trust",
+    budget: "Budget",
   };
-  return map[key] || key;
+  return labels[key] || key;
 }
 
-function generateAdvice() {
-  const advice = [];
-  if (state.metrics.budget < 25) {
-    advice.push("Budget is getting dangerously thin. Mix in lower-cost reforms or wait for a grant event.");
-  }
-  if (state.metrics.trust < 45) {
-    advice.push("Public trust is shaky. Health, housing, and visible service upgrades can stabilise your position.");
-  }
-  if (state.metrics.environment < 40) {
-    advice.push("Environmental conditions are dragging down the city. Cleanup, drainage, or waste work should move up the list.");
-  }
-  if (state.metrics.mobility < 40) {
-    advice.push("Movement across the city is becoming a bottleneck. Congestion can erase economic wins if ignored.");
-  }
-  if (state.metrics.jobs < 50) {
-    advice.push("Employment needs attention. Markets, skills, or industrial power can create faster job momentum.");
-  }
-  if (advice.length === 0) {
-    advice.push("The city is reasonably balanced right now. Use the next round to deepen a strength without exposing a weak flank.");
-  }
-  return advice.slice(0, 4);
+function shortMetricName(key) {
+  const labels = {
+    economy: "Economy",
+    mobility: "Mobility",
+    housing: "Housing",
+    resilience: "Resilience",
+    environment: "Env",
+    jobs: "Jobs",
+    trust: "Trust",
+    budget: "Budget",
+  };
+  return labels[key] || prettyMetricName(key);
+}
+
+function getCityMeta(cityId) {
+  return CITY_META[cityId] || { state: "Unknown", region: "Unknown" };
+}
+
+function getCityById(cityId) {
+  return CITY_LIBRARY.find((city) => city.id === cityId);
 }
 
 function getActiveCity() {
-  return CITY_LIBRARY.find((city) => city.id === activeCityId);
+  return getCityById(activeCityId);
 }
 
-elements.advanceButton.addEventListener("click", advanceYear);
-elements.resetButton.addEventListener("click", () => {
-  state = createState(activeCityId);
+function handleCityChange(cityId) {
+  activeCityId = cityId;
+  state = createState(cityId);
   render();
-});
+}
+
+function attachEvents() {
+  elements.citySelect.addEventListener("change", (event) => handleCityChange(event.target.value));
+  elements.citySelectMobile.addEventListener("change", (event) => handleCityChange(event.target.value));
+  elements.advanceButton.addEventListener("click", advanceRound);
+}
 
 async function loadCities() {
   const response = await fetch("./cities.json");
@@ -680,23 +499,40 @@ async function loadCities() {
   return cities.sort((left, right) => left.name.localeCompare(right.name));
 }
 
+async function loadJsonFile(path) {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${path}: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function init() {
   try {
-    CITY_LIBRARY = await loadCities();
+    const [cities, initiatives, events] = await Promise.all([
+      loadCities(),
+      loadJsonFile("./initiatives.json"),
+      loadJsonFile("./events.json"),
+    ]);
+
+    CITY_LIBRARY = cities;
+    INITIATIVE_LIBRARY = initiatives;
+    EVENT_LIBRARY = events;
     activeCityId = CITY_LIBRARY[0]?.id ?? null;
     state = activeCityId ? createState(activeCityId) : null;
-    elements.cityCount.textContent = `${CITY_LIBRARY.length} cities`;
+    attachEvents();
     render();
   } catch (error) {
-    elements.cityCount.textContent = "City data unavailable";
-    elements.headlineEvent.innerHTML = `
-      <h3>City data could not load</h3>
-      <p>Build Naija now reads cities from <code>cities.json</code>. Open the app through a local web server so the browser can fetch the data file.</p>
+    document.body.innerHTML = `
+      <main class="grid min-h-screen place-items-center bg-shell px-6 text-center text-cream">
+        <div>
+          <h1 class="font-display text-5xl">Build Naija</h1>
+          <p class="mt-4 text-lg text-[#d0c9bd]">The app could not load its data files.</p>
+          <p class="mt-2 text-sm text-[#a9a294]">Run it through a local web server so the browser can fetch <code>cities.json</code>, <code>initiatives.json</code>, and <code>events.json</code>.</p>
+        </div>
+      </main>
     `;
-    elements.advanceButton.disabled = true;
-    elements.resetButton.disabled = true;
-    elements.cityList.innerHTML = "";
-    elements.initiativeList.innerHTML = "";
     console.error(error);
   }
 }

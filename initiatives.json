@@ -1,0 +1,193 @@
+{
+  "transit": {
+    "id": "transit",
+    "title": "Bus Rapid Transit Expansion",
+    "description": "Create dedicated lanes and modern bus terminals to move more people faster across the city.",
+    "cost": 18,
+    "time": "2 years",
+    "effects": {
+      "mobility": 15,
+      "economy": 6,
+      "trust": 5,
+      "budget": -10,
+      "environment": 3
+    },
+    "tradeOff": "Fast mobility gains, but eats a large slice of capital budget."
+  },
+  "housing": {
+    "id": "housing",
+    "title": "Mixed-Income Housing Program",
+    "description": "Unlock land, support densification, and co-fund affordable housing near job clusters.",
+    "cost": 16,
+    "time": "3 years",
+    "effects": {
+      "housing": 16,
+      "trust": 6,
+      "jobs": 5,
+      "budget": -9,
+      "environment": -3
+    },
+    "tradeOff": "Improves inclusion and housing pressure, but can trigger land and infrastructure stress."
+  },
+  "drainage": {
+    "id": "drainage",
+    "title": "Drainage and Flood Defense",
+    "description": "Upgrade drainage channels, desilt waterways, and expand flood defense in vulnerable districts.",
+    "cost": 14,
+    "time": "2 years",
+    "effects": {
+      "resilience": 16,
+      "trust": 4,
+      "environment": 6,
+      "budget": -8,
+      "economy": -2
+    },
+    "tradeOff": "Protects long-term growth, but the wins are less visible than shiny new projects."
+  },
+  "waste": {
+    "id": "waste",
+    "title": "Waste Collection Overhaul",
+    "description": "Improve collection routes, sorting hubs, and enforcement against illegal dumping.",
+    "cost": 9,
+    "time": "1 year",
+    "effects": {
+      "environment": 12,
+      "trust": 5,
+      "resilience": 5,
+      "budget": -5
+    },
+    "tradeOff": "Low glamour, high impact. Keeps the city healthier but rarely excites investors."
+  },
+  "tech-hubs": {
+    "id": "tech-hubs",
+    "title": "Startup and Innovation District",
+    "description": "Create serviced workspaces, small grants, and talent pipelines for high-growth firms.",
+    "cost": 12,
+    "time": "2 years",
+    "effects": {
+      "economy": 12,
+      "jobs": 8,
+      "trust": -2,
+      "budget": -7,
+      "housing": -3
+    },
+    "tradeOff": "Strong growth story, but can deepen inequality if basics are ignored."
+  },
+  "markets": {
+    "id": "markets",
+    "title": "Market Modernisation",
+    "description": "Upgrade stalls, storage, sanitation, and access roads for informal and formal trade hubs.",
+    "cost": 10,
+    "time": "1 year",
+    "effects": {
+      "economy": 8,
+      "jobs": 10,
+      "trust": 4,
+      "budget": -6,
+      "mobility": 2
+    },
+    "tradeOff": "Boosts everyday commerce quickly, but can stall if traffic and utilities stay weak."
+  },
+  "industrial-power": {
+    "id": "industrial-power",
+    "title": "Power Reliability for Industry",
+    "description": "Support captive power, mini-grids, and substation upgrades for factories and industrial clusters.",
+    "cost": 15,
+    "time": "2 years",
+    "effects": {
+      "economy": 14,
+      "jobs": 7,
+      "resilience": 5,
+      "budget": -9,
+      "environment": -4
+    },
+    "tradeOff": "Unlocks production and jobs, but the wrong energy mix can worsen emissions."
+  },
+  "vocational": {
+    "id": "vocational",
+    "title": "Vocational Skills Push",
+    "description": "Expand technical training in construction, fabrication, logistics, and digital operations.",
+    "cost": 8,
+    "time": "1 year",
+    "effects": {
+      "jobs": 12,
+      "economy": 5,
+      "trust": 4,
+      "budget": -4
+    },
+    "tradeOff": "Builds long-term earning power, but needs follow-through from employers to stick."
+  },
+  "water": {
+    "id": "water",
+    "title": "Water Security Upgrade",
+    "description": "Expand borehole networks, treatment systems, and distribution upgrades in underserved areas.",
+    "cost": 13,
+    "time": "2 years",
+    "effects": {
+      "resilience": 11,
+      "trust": 8,
+      "health": 8,
+      "budget": -7,
+      "economy": 2
+    },
+    "tradeOff": "Essential for public health and resilience, though it competes with more visible spending."
+  },
+  "roads": {
+    "id": "roads",
+    "title": "Inner-City Road Rehabilitation",
+    "description": "Repair critical roads and junctions connecting markets, schools, and residential zones.",
+    "cost": 11,
+    "time": "1 year",
+    "effects": {
+      "mobility": 9,
+      "economy": 6,
+      "trust": 3,
+      "budget": -6,
+      "environment": -2
+    },
+    "tradeOff": "Popular and practical, but road-first strategy can become an expensive trap."
+  },
+  "health": {
+    "id": "health",
+    "title": "Primary Health Access",
+    "description": "Upgrade local clinics, recruit staff, and improve medicine availability in dense communities.",
+    "cost": 10,
+    "time": "1 year",
+    "effects": {
+      "trust": 9,
+      "resilience": 6,
+      "jobs": 3,
+      "budget": -6
+    },
+    "tradeOff": "Citizens feel the benefit fast, but financial return is indirect and slower."
+  },
+  "cleanup": {
+    "id": "cleanup",
+    "title": "Pollution Cleanup and Monitoring",
+    "description": "Fund cleanup teams, water testing, and environmental enforcement in heavily impacted areas.",
+    "cost": 12,
+    "time": "2 years",
+    "effects": {
+      "environment": 17,
+      "trust": 6,
+      "resilience": 4,
+      "budget": -7,
+      "economy": -2
+    },
+    "tradeOff": "Repairs damage and builds legitimacy, but may constrain extractive activity in the short term."
+  },
+  "skills": {
+    "id": "skills",
+    "title": "Youth Employment Compact",
+    "description": "Blend apprenticeships, SME support, and placement incentives for unemployed young adults.",
+    "cost": 9,
+    "time": "1 year",
+    "effects": {
+      "jobs": 11,
+      "trust": 7,
+      "economy": 5,
+      "budget": -5
+    },
+    "tradeOff": "Raises optimism quickly, but weak business conditions can limit the payoff."
+  }
+}
