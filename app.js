@@ -146,8 +146,10 @@ createApp({
       cityLibrary: [],
       initiativeLibrary: {},
       eventLibrary: {},
+      metricConfig: METRIC_CONFIG,
       startYear: START_YEAR,
       totalRounds: TOTAL_ROUNDS,
+      hasStarted: false,
       activeCityId: null,
       state: null,
       displayedMetrics: null,
@@ -176,6 +178,31 @@ createApp({
         region,
         cities: this.cityLibrary.filter((city) => getCityMeta(city.id).region === region),
       }));
+    },
+    featuredCities() {
+      const preferred = ["lagos", "abuja", "kano", "port-harcourt", "maiduguri", "enugu"];
+      const featured = preferred
+        .map((id) => this.cityLibrary.find((city) => city.id === id))
+        .filter(Boolean);
+      if (featured.length >= 6) {
+        return featured;
+      }
+      return this.cityLibrary.slice(0, 6);
+    },
+    nationalAverageScore() {
+      if (this.cityLibrary.length === 0) {
+        return 0;
+      }
+      const total = this.cityLibrary.reduce((sum, city) => sum + this.calculateScore(city.metrics), 0);
+      return Math.round(total / this.cityLibrary.length);
+    },
+    landingStats() {
+      return [
+        { label: "Playable cities", value: this.cityLibrary.length },
+        { label: "Regions", value: REGION_ORDER.length },
+        { label: "Rounds per term", value: TOTAL_ROUNDS },
+        { label: "Average readiness", value: `${this.nationalAverageScore}/100` },
+      ];
     },
     renderedMetrics() {
       const source = this.displayedMetrics || (this.state ? this.state.metrics : {});
@@ -469,6 +496,17 @@ createApp({
       this.state = this.createState(cityId);
       this.displayedMetrics = { ...this.state.metrics };
       this.cityPickerOpen = false;
+      this.applyCityTheme();
+    },
+    startCampaign(cityId = this.activeCityId) {
+      if (cityId) {
+        this.activeCityId = cityId;
+      }
+      this.state = this.createState(this.activeCityId);
+      this.displayedMetrics = { ...this.state.metrics };
+      this.historyVisible = false;
+      this.cityPickerOpen = false;
+      this.hasStarted = true;
       this.applyCityTheme();
     },
     getInitiativePreview(initiative) {
@@ -839,7 +877,158 @@ createApp({
     }
   },
   template: `
-    <div v-if="state" class="min-h-screen pb-28">
+    <div>
+      <main v-if="!hasStarted" class="relative min-h-screen overflow-hidden bg-shell text-cream">
+        <div class="absolute inset-0 opacity-90" :style="{ background: 'radial-gradient(circle at 12% 12%, ' + currentTheme.soft + '20, transparent 28%), radial-gradient(circle at 86% 16%, ' + currentTheme.accent + '24, transparent 24%), linear-gradient(180deg, #090908 0%, #050505 44%, #12110e 100%)' }"></div>
+        <div class="relative z-10 mx-auto flex w-[min(1380px,calc(100vw-1.5rem))] flex-col px-2 pb-14 pt-6">
+          <header class="flex flex-col gap-5 border-b border-[#2e2c28] pb-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 class="font-display text-5xl font-semibold tracking-[-0.03em] text-[#f7f3eb] md:text-6xl">
+                Build <span class="text-green">Naija</span>
+              </h1>
+              <p class="mt-3 max-w-2xl text-base leading-8 text-[#c9c2b6]">
+                A Nigerian city strategy game about pressure, trade-offs, and the hard work of making growth feel real.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <span class="rounded-full border border-[#49463f] bg-[#1f1d1a] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">All regions of Nigeria</span>
+              <span class="rounded-full border border-[#49463f] bg-[#1f1d1a] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">Data-driven cities and events</span>
+            </div>
+          </header>
+
+          <section class="grid gap-8 pt-10 xl:grid-cols-[1.08fr_0.92fr] xl:items-end">
+            <div>
+              <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[#9f988c]">Plan a full civic term</p>
+              <h2 class="mt-4 max-w-4xl font-display text-[clamp(4.3rem,9vw,8rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-[#f8f3e8]">
+                Grow a city without breaking it.
+              </h2>
+              <p class="mt-6 max-w-3xl text-xl font-medium leading-10 text-[#d0c9bc]">
+                Pick a Nigerian city, work through ten rounds of budget pressure and civic shocks, and leave behind either a legacy front page or a federal takeover notice.
+              </p>
+              <div class="mt-8 flex flex-wrap gap-4">
+                <button
+                  type="button"
+                  class="rounded-full px-7 py-4 text-lg font-bold transition hover:-translate-y-0.5"
+                  :style="{ backgroundColor: currentTheme.soft, color: currentTheme.accent }"
+                  @click="startCampaign()"
+                >
+                  Start with {{ activeCity ? activeCity.name : 'a city' }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full border border-[#5e5a52] bg-[#171613] px-7 py-4 text-lg font-semibold text-[#efe7db] transition hover:border-[#807a70] hover:bg-[#23211d]"
+                  @click="cityPickerOpen = !cityPickerOpen"
+                >
+                  {{ cityPickerOpen ? 'Hide city list' : 'Choose another city' }}
+                </button>
+              </div>
+              <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <article v-for="stat in landingStats" :key="stat.label" class="rounded-[1.4rem] border border-[#34312c] bg-[#171613]/90 px-5 py-5">
+                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#938c80]">{{ stat.label }}</p>
+                  <p class="mt-3 text-4xl font-semibold text-[#f5efe5]">{{ stat.value }}</p>
+                </article>
+              </div>
+            </div>
+
+            <section class="rounded-[2rem] border border-[#3a3833] bg-[#141310]/92 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)]">
+              <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#9f988c]">Current spotlight</p>
+              <div class="mt-4 flex items-start justify-between gap-4">
+                <div>
+                  <p class="text-sm uppercase tracking-[0.18em] text-[#908a7f]">{{ activeMeta.state }} · {{ activeMeta.region }}</p>
+                  <h3 class="mt-2 font-display text-6xl font-semibold leading-none text-[#f7f3eb]">{{ activeCity ? activeCity.name : '' }}</h3>
+                </div>
+                <div class="rounded-full px-5 py-2 text-base font-bold" :style="{ backgroundColor: currentTheme.soft, color: currentTheme.accent }">
+                  {{ activeCity ? calculateScore(activeCity.metrics) : 0 }}/100
+                </div>
+              </div>
+              <p class="mt-5 text-lg leading-9 text-[#d1cabd]">{{ activeCity ? activeCity.summary : '' }}</p>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <span v-for="resource in (activeCity ? activeCity.resources : [])" :key="resource" class="rounded-full border border-[#4b473f] bg-[#1e1c18] px-4 py-2 text-sm font-semibold text-[#e6ddcf]">{{ resource }}</span>
+              </div>
+              <div class="mt-8 grid grid-cols-2 gap-3">
+                <div
+                  v-for="metric in metricConfig.slice(0, 4)"
+                  :key="'landing-' + metric.key"
+                  class="rounded-[1.2rem] border border-[#302d28] bg-[#1b1a16] px-4 py-4"
+                >
+                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#91897e]">{{ metric.label }}</p>
+                  <p class="mt-2 text-3xl font-semibold text-[#f7f3eb]">{{ activeCity ? clampMetric(activeCity.metrics[metric.key]) : 0 }}</p>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section v-if="cityPickerOpen" class="mt-8 rounded-[2rem] border border-[#3a3833] bg-[#141310]/94 p-6">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#9f988c]">Choose your starting city</p>
+                <p class="mt-1 text-lg font-semibold text-[#f4ede2]">Every city begins with different strengths, constraints, and political pressure.</p>
+              </div>
+              <button type="button" class="rounded-full border border-[#5b584f] px-4 py-2 text-sm font-semibold text-[#ddd6ca]" @click="cityPickerOpen = false">Close</button>
+            </div>
+            <div class="grid gap-4 lg:grid-cols-3">
+              <section v-for="group in groupedCities" :key="'landing-' + group.region" class="rounded-[1.35rem] border border-[#302d28] bg-[#181713] p-4">
+                <p class="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-[#91897e]">{{ group.region }}</p>
+                <div class="grid gap-3">
+                  <button
+                    v-for="city in group.cities"
+                    :key="'landing-city-' + city.id"
+                    type="button"
+                    class="rounded-2xl border px-4 py-4 text-left transition"
+                    :class="cityCardClasses(city.id)"
+                    @click="activeCityId = city.id; applyCityTheme()"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-base font-semibold">{{ city.name }}</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.14em]" :class="cityStateClasses(city.id)">{{ getCityMeta(city.id).state }}</p>
+                      </div>
+                      <p class="text-xs font-bold" :class="cityStateClasses(city.id)">{{ calculateScore(city.metrics) }}/100</p>
+                    </div>
+                  </button>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="mt-10">
+            <div class="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#9f988c]">Featured pressures</p>
+                <p class="mt-2 text-2xl font-semibold text-[#f4ede2]">Different cities ask different things of you.</p>
+              </div>
+            </div>
+            <div class="grid gap-4 lg:grid-cols-3">
+              <article
+                v-for="city in featuredCities"
+                :key="'featured-' + city.id"
+                class="group rounded-[1.6rem] border border-[#34312c] bg-[#171613]/92 p-5 transition hover:-translate-y-1 hover:border-[#5d9813]"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#938c80]">{{ getCityMeta(city.id).state }} · {{ getCityMeta(city.id).region }}</p>
+                    <h3 class="mt-2 font-display text-4xl font-semibold leading-none text-[#f7f3eb]">{{ city.name }}</h3>
+                  </div>
+                  <span class="rounded-full border border-[#45423b] px-3 py-1.5 text-sm font-bold text-[#d9d2c6]">{{ calculateScore(city.metrics) }}/100</span>
+                </div>
+                <p class="mt-4 text-base leading-8 text-[#cdc6b9]">{{ city.summary }}</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                  <span v-for="resource in city.resources.slice(0, 3)" :key="city.id + '-' + resource" class="rounded-full bg-[#1f1d19] px-3 py-1.5 text-sm font-semibold text-[#e6ddcf]">{{ resource }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="mt-6 text-sm font-extrabold uppercase tracking-[0.18em] text-[#b8d56f] transition group-hover:text-[#d9ec9c]"
+                  @click="startCampaign(city.id)"
+                >
+                  Start in {{ city.name }} →
+                </button>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <div v-else-if="state" class="min-h-screen pb-28">
       <div
         class="pointer-events-none fixed inset-0 z-40 opacity-0"
         :class="{ 'screen-flash': flashActive }"
@@ -1180,6 +1369,7 @@ createApp({
           </button>
         </div>
       </footer>
+      </div>
     </div>
   `,
 }).mount("#app");
