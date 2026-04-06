@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Build Naija</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Civic Strategy Simulator</p>
+          <h1>Build Naija</h1>
+          <p class="hero-text">
+            Rebuild the future of Nigerian cities by balancing money, trust,
+            jobs, infrastructure, and resilience. Every move helps something
+            and stresses something else.
+          </p>
+          <div class="hero-highlights">
+            <span>3 cities</span>
+            <span>12 years</span>
+            <span>Hard trade-offs</span>
+          </div>
+        </div>
+        <aside class="hero-panel">
+          <p class="panel-label">Mission</p>
+          <p id="hero-city-name" class="panel-city">Lagos</p>
+          <p id="hero-city-summary" class="panel-summary"></p>
+          <div class="panel-stats">
+            <div>
+              <span>Budget</span>
+              <strong id="hero-budget"></strong>
+            </div>
+            <div>
+              <span>Public trust</span>
+              <strong id="hero-trust"></strong>
+            </div>
+          </div>
+        </aside>
+      </header>
+
+      <main class="app-grid">
+        <section class="city-picker section-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Choose Your City</p>
+              <h2>Starting conditions matter</h2>
+            </div>
+            <p class="section-note">
+              Each city comes with a different economic base, political mood,
+              environmental pressure, and development path.
+            </p>
+          </div>
+          <div id="city-list" class="city-list" aria-label="City options"></div>
+        </section>
+
+        <section class="dashboard section-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Control Room</p>
+              <h2>City dashboard</h2>
+            </div>
+            <div class="year-chip">
+              <span>Current year</span>
+              <strong id="year-display"></strong>
+            </div>
+          </div>
+          <div id="metrics-grid" class="metrics-grid"></div>
+          <div class="resource-strip">
+            <div>
+              <p class="strip-label">Local strengths</p>
+              <div id="resource-list" class="resource-list"></div>
+            </div>
+            <div class="score-box">
+              <span>City balance score</span>
+              <strong id="score-display"></strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="initiatives section-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Policy Deck</p>
+              <h2>Pick up to 2 moves this year</h2>
+            </div>
+            <button id="advance-turn" class="advance-button" type="button">
+              Simulate next year
+            </button>
+          </div>
+          <div id="selection-summary" class="selection-summary"></div>
+          <div id="initiative-list" class="initiative-list"></div>
+        </section>
+
+        <section class="insights section-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Field Report</p>
+              <h2>What changed</h2>
+            </div>
+            <button id="reset-game" class="ghost-button" type="button">
+              Restart city
+            </button>
+          </div>
+          <div id="headline-event" class="headline-event"></div>
+          <div class="insight-columns">
+            <div>
+              <p class="strip-label">Planner notes</p>
+              <ul id="advice-list" class="advice-list"></ul>
+            </div>
+            <div>
+              <p class="strip-label">Timeline</p>
+              <div id="event-log" class="event-log"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
