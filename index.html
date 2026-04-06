@@ -5,18 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Build Naija</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               shell: "#050505",
-              panel: "#2d2c28",
               line: "#46443f",
               cream: "#f4ead8",
               card: "#2f2e2a",
               green: "#5d9813",
-              softGreen: "#dfe8c6",
               red: "#d43b30",
               amber: "#be7c1d",
               teal: "#12806d"
@@ -76,121 +75,7 @@
     />
   </head>
   <body class="min-h-screen bg-shell font-body text-cream antialiased">
-    <div class="min-h-screen pb-28">
-      <div id="screen-flash" class="pointer-events-none fixed inset-0 z-40 opacity-0"></div>
-      <header class="border-b border-line bg-[#32312d]">
-        <div class="mx-auto flex w-[min(1360px,calc(100vw-1.5rem))] flex-col gap-4 px-2 py-5 md:flex-row md:items-center md:justify-between">
-          <div class="flex items-center gap-4">
-            <h1 class="font-display text-4xl font-semibold tracking-[-0.02em] text-[#f7f3eb]">
-              Build <span class="text-green">Naija</span>
-            </h1>
-            <button
-              id="open-city-picker"
-              type="button"
-              class="hidden items-center gap-3 rounded-full border border-line bg-[#272622] px-4 py-2 text-left text-sm text-[#d3cec3] transition hover:border-[#7a776f] hover:bg-[#2d2c28] md:flex"
-            >
-              <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
-              <span id="city-picker-label" class="font-semibold text-[#f3ede3]"></span>
-            </button>
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              id="open-city-picker-mobile"
-              type="button"
-              class="flex items-center gap-2 rounded-full border border-line bg-[#272622] px-4 py-2 text-sm text-[#d3cec3] md:hidden"
-            >
-              <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
-              <span id="city-picker-label-mobile" class="font-semibold text-[#f3ede3]"></span>
-            </button>
-            <button
-              id="toggle-history"
-              type="button"
-              class="rounded-full border border-line bg-[#272622] px-4 py-2 text-sm font-semibold text-[#d7d1c6] transition hover:border-[#7a776f] hover:bg-[#2d2c28]"
-            >
-              History
-            </button>
-            <div class="rounded-full border border-line bg-[#272622] px-6 py-2 text-[0.95rem] font-semibold leading-tight text-[#d7d1c6]">
-              <span id="round-display"></span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section id="city-picker-panel" class="relative z-20 hidden border-b border-line bg-[#1f1e1b]">
-        <div class="mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-5">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a29d94]">Choose City</p>
-              <p class="mt-1 text-lg font-semibold text-[#f3ede3]">Browse by geopolitical zone, not a flat list.</p>
-            </div>
-            <button id="close-city-picker" type="button" class="rounded-full border border-line px-4 py-2 text-sm font-semibold text-[#d7d1c6]">Close</button>
-          </div>
-          <div id="city-picker-groups" class="grid gap-4 lg:grid-cols-3"></div>
-        </div>
-      </section>
-
-      <main class="relative z-10 mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-7">
-        <section class="mb-8">
-          <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div class="max-w-3xl">
-              <p id="city-meta" class="mb-3 text-sm uppercase tracking-[0.2em] text-[#8d877c]"></p>
-              <h2 id="hero-city-name" class="font-display text-6xl font-semibold leading-none text-[#f7f3eb] md:text-7xl"></h2>
-              <p id="hero-city-summary" class="mt-4 max-w-2xl text-xl font-semibold leading-[1.45] text-[#d6d0c5]"></p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-              <div id="budget-pill" class="rounded-full bg-[#e5edcf] px-8 py-3 text-xl font-semibold text-[#4d7918]"></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="metrics-grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
-
-        <section id="event-banner" class="banner-pop mt-8 rounded-3xl border px-8 py-6"></section>
-
-        <section class="mt-5">
-          <p class="text-sm uppercase tracking-[0.22em] text-[#958f84]">Round verdict</p>
-          <p id="verdict-line" class="mt-2 text-2xl font-semibold leading-tight text-[#f0eadf]"></p>
-        </section>
-
-        <section id="history-panel" class="mt-8 hidden rounded-[1.6rem] border border-[#3e3c37] bg-[#1e1d1a] px-6 py-5">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#989286]">Round history</p>
-              <p class="mt-1 text-lg font-semibold text-[#f3ede3]">A scannable record of what you did and what happened.</p>
-            </div>
-            <button id="hide-history" type="button" class="rounded-full border border-[#55524d] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">Hide</button>
-          </div>
-          <div id="history-log" class="grid gap-3 lg:grid-cols-2"></div>
-        </section>
-
-        <section id="initiatives-section" class="mt-8">
-          <div class="mb-5 border-b border-[#d7d1c6] pb-4">
-            <p class="text-2xl font-extrabold uppercase tracking-[0.08em] text-[#ddd6ca]">
-              Choose Your Initiatives <span class="text-[#b4aea2]">- Pick Up To 2</span>
-            </p>
-          </div>
-          <div id="initiative-list" class="grid gap-4 xl:grid-cols-2"></div>
-        </section>
-
-        <section id="end-screen" class="mt-10 hidden"></section>
-      </main>
-
-      <footer id="game-footer" class="fixed bottom-0 left-0 right-0 border-t border-line bg-[#32312d]/95 backdrop-blur">
-        <div class="mx-auto flex w-[min(1440px,100vw)] items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <p id="selection-status" class="text-lg font-semibold text-[#e6dfd2]"></p>
-          </div>
-          <button
-            id="advance-turn"
-            type="button"
-            class="rounded-3xl border border-[#6c6a65] bg-transparent px-10 py-4 text-2xl font-semibold text-[#faf7f1] transition hover:border-[#908d86] hover:bg-[#3a3935] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            End round ↗
-          </button>
-        </div>
-      </footer>
-    </div>
-
+    <div id="app"></div>
     <script type="module" src="./app.js"></script>
   </body>
 </html>
