@@ -1,192 +1,333 @@
 {
-  "transit": {
-    "id": "transit",
-    "title": "Bus Rapid Transit Expansion",
-    "description": "Create dedicated lanes and modern bus terminals to move more people faster across the city.",
-    "cost": 18,
-    "time": "2 years",
-    "effects": {
-      "mobility": 15,
-      "economy": 6,
-      "trust": 5,
-      "budget": -10,
-      "environment": 3
-    },
-    "tradeOff": "Fast mobility gains, but eats a large slice of capital budget."
+  "coastal-flood": {
+    "id": "coastal-flood",
+    "title": "Coastal flooding hits the waterfront",
+    "body": "Floodwaters have breached drainage limits, displacing thousands of residents near the coast. The city needs a response before the damage spreads inland.",
+    "choices": [
+      {
+        "id": "emergency-fund",
+        "label": "Divert emergency funds to containment",
+        "tag": "₦3B cost",
+        "effects": { "budget": -3, "resilience": -3, "trust": 2 }
+      },
+      {
+        "id": "federal-emergency",
+        "label": "Declare emergency, request federal support",
+        "tag": "Political cost · delayed gain",
+        "effects": { "trust": -5, "resilience": -5 },
+        "delayedEffects": { "resilience": 6, "budget": 3 }
+      },
+      {
+        "id": "absorb",
+        "label": "Absorb the full damage",
+        "tag": "Full exposure",
+        "effects": { "resilience": -10, "housing": -5, "economy": -3, "trust": -3 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "resilience",
+        "operator": ">=",
+        "value": 58,
+        "label": "Your flood defense investment limits the damage",
+        "bonus": { "resilience": 4, "trust": 2 }
+      }
+    ]
   },
-  "housing": {
-    "id": "housing",
-    "title": "Mixed-Income Housing Program",
-    "description": "Unlock land, support densification, and co-fund affordable housing near job clusters.",
-    "cost": 16,
-    "time": "3 years",
-    "effects": {
-      "housing": 16,
-      "trust": 6,
-      "jobs": 5,
-      "budget": -9,
-      "environment": -3
-    },
-    "tradeOff": "Improves inclusion and housing pressure, but can trigger land and infrastructure stress."
+
+  "oil-spill": {
+    "id": "oil-spill",
+    "title": "Oil spill reported in downstream corridors",
+    "body": "A pipeline rupture has contaminated waterways and sparked community anger. Immediate decisions will determine how far the damage spreads.",
+    "choices": [
+      {
+        "id": "cleanup-fund",
+        "label": "Fund immediate cleanup operations",
+        "tag": "₦5B cost",
+        "effects": { "budget": -5, "environment": 5, "trust": 3 }
+      },
+      {
+        "id": "restrict-extraction",
+        "label": "Restrict extraction zone, demand accountability",
+        "tag": "Economic cost",
+        "effects": { "economy": -4, "environment": 4, "trust": 5 }
+      },
+      {
+        "id": "downplay",
+        "label": "Manage the message, minimal intervention",
+        "tag": "Reputation risk",
+        "effects": { "trust": -9, "environment": -6, "resilience": -3 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "environment",
+        "operator": ">=",
+        "value": 45,
+        "label": "Your environmental monitoring contained the spill faster",
+        "bonus": { "environment": 3, "trust": 2 }
+      }
+    ]
   },
-  "drainage": {
-    "id": "drainage",
-    "title": "Drainage and Flood Defense",
-    "description": "Upgrade drainage channels, desilt waterways, and expand flood defense in vulnerable districts.",
-    "cost": 14,
-    "time": "2 years",
-    "effects": {
-      "resilience": 16,
-      "trust": 4,
-      "environment": 6,
-      "budget": -8,
-      "economy": -2
-    },
-    "tradeOff": "Protects long-term growth, but the wins are less visible than shiny new projects."
+
+  "federal-grant": {
+    "id": "federal-grant",
+    "title": "Federal capital allocation arrives",
+    "body": "Abuja has approved a discretionary development grant for the city. How you direct it will signal your priorities to citizens and investors.",
+    "choices": [
+      {
+        "id": "infrastructure",
+        "label": "Commit funds to urban infrastructure",
+        "tag": "+₦8B · mobility",
+        "effects": { "budget": 8, "mobility": 4, "trust": 2 }
+      },
+      {
+        "id": "social",
+        "label": "Prioritise social services and housing",
+        "tag": "+₦6B · trust",
+        "effects": { "budget": 6, "trust": 7, "housing": 3 }
+      },
+      {
+        "id": "economy-push",
+        "label": "Direct into economic and jobs programs",
+        "tag": "+₦5B · jobs",
+        "effects": { "budget": 5, "economy": 5, "jobs": 5, "trust": 3 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "trust",
+        "operator": ">=",
+        "value": 62,
+        "label": "High public confidence unlocked a supplemental allocation",
+        "bonus": { "budget": 3 }
+      }
+    ]
   },
-  "waste": {
-    "id": "waste",
-    "title": "Waste Collection Overhaul",
-    "description": "Improve collection routes, sorting hubs, and enforcement against illegal dumping.",
-    "cost": 9,
-    "time": "1 year",
-    "effects": {
-      "environment": 12,
-      "trust": 5,
-      "resilience": 5,
-      "budget": -5
-    },
-    "tradeOff": "Low glamour, high impact. Keeps the city healthier but rarely excites investors."
+
+  "community-protest": {
+    "id": "community-protest",
+    "title": "Street protests erupt over service failure",
+    "body": "Residents have blocked major roads after weeks of unaddressed infrastructure neglect. The city is watching how leadership responds.",
+    "choices": [
+      {
+        "id": "negotiate",
+        "label": "Negotiate directly and make concrete commitments",
+        "tag": "₦3B commitment",
+        "effects": { "trust": 6, "budget": -3, "economy": -2 }
+      },
+      {
+        "id": "security",
+        "label": "Restore order through police presence",
+        "tag": "Trust risk",
+        "effects": { "trust": -8, "economy": -2, "resilience": -2 }
+      },
+      {
+        "id": "investigate",
+        "label": "Launch an inquiry and promise follow-up",
+        "tag": "Delayed return",
+        "effects": { "trust": 2 },
+        "delayedEffects": { "trust": 5 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "trust",
+        "operator": ">=",
+        "value": 58,
+        "label": "Your standing trust reserve moderated the protest scale",
+        "bonus": { "trust": 3 }
+      },
+      {
+        "metric": "trust",
+        "operator": "<",
+        "value": 35,
+        "label": "Deep distrust has amplified the unrest beyond expectations",
+        "bonus": { "trust": -4, "economy": -2 }
+      }
+    ]
   },
-  "tech-hubs": {
-    "id": "tech-hubs",
-    "title": "Startup and Innovation District",
-    "description": "Create serviced workspaces, small grants, and talent pipelines for high-growth firms.",
-    "cost": 12,
-    "time": "2 years",
-    "effects": {
-      "economy": 12,
-      "jobs": 8,
-      "trust": -2,
-      "budget": -7,
-      "housing": -3
-    },
-    "tradeOff": "Strong growth story, but can deepen inequality if basics are ignored."
+
+  "investment-wave": {
+    "id": "investment-wave",
+    "title": "Private investors signal major interest",
+    "body": "A cluster of firms in logistics, services, and light manufacturing are considering committing capital. The terms you negotiate now will define the deal.",
+    "choices": [
+      {
+        "id": "infrastructure-pledge",
+        "label": "Pledge infrastructure improvements to attract them",
+        "tag": "₦3B cost · high return",
+        "effects": { "budget": -3, "economy": 10, "jobs": 5, "trust": 2 }
+      },
+      {
+        "id": "employment-quotas",
+        "label": "Negotiate local employment and equity quotas",
+        "tag": "Balanced deal",
+        "effects": { "economy": 6, "jobs": 9, "trust": 5 }
+      },
+      {
+        "id": "open-market",
+        "label": "Open the market without conditions",
+        "tag": "Fast growth · displacement risk",
+        "effects": { "economy": 10, "jobs": 3, "housing": -4, "trust": -2 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "economy",
+        "operator": ">=",
+        "value": 62,
+        "label": "Your economic track record attracts a larger investor pool",
+        "bonus": { "economy": 3, "jobs": 2 }
+      }
+    ]
   },
-  "markets": {
-    "id": "markets",
-    "title": "Market Modernisation",
-    "description": "Upgrade stalls, storage, sanitation, and access roads for informal and formal trade hubs.",
-    "cost": 10,
-    "time": "1 year",
-    "effects": {
-      "economy": 8,
-      "jobs": 10,
-      "trust": 4,
-      "budget": -6,
-      "mobility": 2
-    },
-    "tradeOff": "Boosts everyday commerce quickly, but can stall if traffic and utilities stay weak."
+
+  "rent-strike": {
+    "id": "rent-strike",
+    "title": "Tenants across the city refuse rent payments",
+    "body": "Overcrowding and unaffordable housing have pushed residents to organize a widespread rent strike. Landlords are demanding government action.",
+    "choices": [
+      {
+        "id": "freeze",
+        "label": "Impose a temporary rent freeze",
+        "tag": "Trust win · market chill",
+        "effects": { "trust": 6, "economy": -4, "housing": 2 }
+      },
+      {
+        "id": "accelerate-housing",
+        "label": "Accelerate affordable housing delivery",
+        "tag": "₦4B · medium-term fix",
+        "effects": { "housing": 6, "budget": -4, "trust": 4 }
+      },
+      {
+        "id": "mediate",
+        "label": "Mediate between tenants and landlords",
+        "tag": "Balanced but slow",
+        "effects": { "trust": 3, "housing": 2, "economy": -1 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "housing",
+        "operator": ">=",
+        "value": 58,
+        "label": "Prior housing investment limits the strike's reach",
+        "bonus": { "trust": 3, "housing": 2 }
+      }
+    ]
   },
-  "industrial-power": {
-    "id": "industrial-power",
-    "title": "Power Reliability for Industry",
-    "description": "Support captive power, mini-grids, and substation upgrades for factories and industrial clusters.",
-    "cost": 15,
-    "time": "2 years",
-    "effects": {
-      "economy": 14,
-      "jobs": 7,
-      "resilience": 5,
-      "budget": -9,
-      "environment": -4
-    },
-    "tradeOff": "Unlocks production and jobs, but the wrong energy mix can worsen emissions."
+
+  "dry-season": {
+    "id": "dry-season",
+    "title": "Prolonged dry season strains water supply",
+    "body": "Reservoir levels have dropped critically. Urban agriculture, industry, and household supply are all under pressure from the shortfall.",
+    "choices": [
+      {
+        "id": "rationing",
+        "label": "Implement emergency water rationing",
+        "tag": "Trust cost",
+        "effects": { "trust": -4, "resilience": -3, "economy": -2 }
+      },
+      {
+        "id": "emergency-boreholes",
+        "label": "Activate emergency boreholes and distribution",
+        "tag": "₦4B · contained damage",
+        "effects": { "budget": -4, "resilience": -2, "trust": 2 }
+      },
+      {
+        "id": "trucking",
+        "label": "Water trucking program for critical zones",
+        "tag": "₦6B · trust gain",
+        "effects": { "budget": -6, "resilience": -2, "trust": 4, "jobs": 2 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "resilience",
+        "operator": ">=",
+        "value": 58,
+        "label": "Your water infrastructure investment reduces the crisis severity",
+        "bonus": { "resilience": 5, "trust": 2 }
+      }
+    ]
   },
-  "vocational": {
-    "id": "vocational",
-    "title": "Vocational Skills Push",
-    "description": "Expand technical training in construction, fabrication, logistics, and digital operations.",
-    "cost": 8,
-    "time": "1 year",
-    "effects": {
-      "jobs": 12,
-      "economy": 5,
-      "trust": 4,
-      "budget": -4
-    },
-    "tradeOff": "Builds long-term earning power, but needs follow-through from employers to stick."
+
+  "market-boom": {
+    "id": "market-boom",
+    "title": "Informal sector trade surges unexpectedly",
+    "body": "A wave of commercial activity is flowing through the city's informal markets. The city must decide how to engage before momentum peaks.",
+    "choices": [
+      {
+        "id": "invest-infrastructure",
+        "label": "Invest in market infrastructure now",
+        "tag": "₦3B · sustained gains",
+        "effects": { "economy": 8, "jobs": 6, "budget": -3, "trust": 3 }
+      },
+      {
+        "id": "tax-the-boom",
+        "label": "Tax and formalise for public revenue",
+        "tag": "Revenue gain",
+        "effects": { "economy": 5, "jobs": 3, "budget": 5, "trust": -2 }
+      },
+      {
+        "id": "let-run",
+        "label": "Let it run freely without intervention",
+        "tag": "Short-term peak · volatile",
+        "effects": { "economy": 10, "jobs": 5, "housing": -2, "environment": -2 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "economy",
+        "operator": ">=",
+        "value": 58,
+        "label": "Your economic foundations amplify the boom's benefits",
+        "bonus": { "economy": 2, "jobs": 2 }
+      }
+    ]
   },
-  "water": {
-    "id": "water",
-    "title": "Water Security Upgrade",
-    "description": "Expand borehole networks, treatment systems, and distribution upgrades in underserved areas.",
-    "cost": 13,
-    "time": "2 years",
-    "effects": {
-      "resilience": 14,
-      "trust": 8,
-      "budget": -7,
-      "economy": 2
-    },
-    "tradeOff": "Essential for public health and resilience, though it competes with more visible spending."
-  },
-  "roads": {
-    "id": "roads",
-    "title": "Inner-City Road Rehabilitation",
-    "description": "Repair critical roads and junctions connecting markets, schools, and residential zones.",
-    "cost": 11,
-    "time": "1 year",
-    "effects": {
-      "mobility": 9,
-      "economy": 6,
-      "trust": 3,
-      "budget": -6,
-      "environment": -2
-    },
-    "tradeOff": "Popular and practical, but road-first strategy can become an expensive trap."
-  },
-  "health": {
-    "id": "health",
-    "title": "Primary Health Access",
-    "description": "Upgrade local clinics, recruit staff, and improve medicine availability in dense communities.",
-    "cost": 10,
-    "time": "1 year",
-    "effects": {
-      "trust": 9,
-      "resilience": 6,
-      "jobs": 3,
-      "budget": -6
-    },
-    "tradeOff": "Citizens feel the benefit fast, but financial return is indirect and slower."
-  },
-  "cleanup": {
-    "id": "cleanup",
-    "title": "Pollution Cleanup and Monitoring",
-    "description": "Fund cleanup teams, water testing, and environmental enforcement in heavily impacted areas.",
-    "cost": 12,
-    "time": "2 years",
-    "effects": {
-      "environment": 17,
-      "trust": 6,
-      "resilience": 4,
-      "budget": -7,
-      "economy": -2
-    },
-    "tradeOff": "Repairs damage and builds legitimacy, but may constrain extractive activity in the short term."
-  },
-  "skills": {
-    "id": "skills",
-    "title": "Youth Employment Compact",
-    "description": "Blend apprenticeships, SME support, and placement incentives for unemployed young adults.",
-    "cost": 9,
-    "time": "1 year",
-    "effects": {
-      "jobs": 11,
-      "trust": 7,
-      "economy": 5,
-      "budget": -5
-    },
-    "tradeOff": "Raises optimism quickly, but weak business conditions can limit the payoff."
+
+  "migration-surge": {
+    "id": "migration-surge",
+    "title": "Population influx strains city capacity",
+    "body": "Economic pressure elsewhere is pushing people into the city faster than infrastructure can absorb them. Housing, transport, and services are feeling the squeeze.",
+    "choices": [
+      {
+        "id": "welcome-support",
+        "label": "Welcome with settlement and integration support",
+        "tag": "₦3B · community gains",
+        "effects": { "budget": -3, "jobs": 4, "housing": -3, "trust": 4 }
+      },
+      {
+        "id": "emergency-housing",
+        "label": "Invest immediately in emergency housing",
+        "tag": "₦5B · housing relief",
+        "effects": { "budget": -5, "housing": 4, "trust": 3, "jobs": 2 },
+        "delayedEffects": { "economy": 2, "jobs": 2 }
+      },
+      {
+        "id": "managed-entry",
+        "label": "Manage entry and limit informal settlement",
+        "tag": "Restrictive · unpopular",
+        "effects": { "trust": -4, "housing": 1, "resilience": -2 }
+      }
+    ],
+    "mitigations": [
+      {
+        "metric": "housing",
+        "operator": ">=",
+        "value": 58,
+        "label": "Strong housing capacity absorbs the surge with less strain",
+        "bonus": { "housing": 3, "trust": 2 }
+      },
+      {
+        "metric": "jobs",
+        "operator": ">=",
+        "value": 58,
+        "label": "A strong job market turns migrants into economic contributors",
+        "bonus": { "economy": 3, "jobs": 2 }
+      }
+    ]
   }
 }

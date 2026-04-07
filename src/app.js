@@ -11,7 +11,7 @@ const METRIC_CONFIG = [
 
 const TRACKED_METRICS = ["economy", "mobility", "housing", "resilience", "environment", "jobs", "trust", "budget"];
 const START_YEAR = 2026;
-const TOTAL_ROUNDS = 4;
+const TOTAL_ROUNDS = 6;
 const REGION_ORDER = ["North West", "North East", "North Central", "South West", "South East", "South South"];
 
 const DEFAULT_THEME = {
@@ -84,14 +84,124 @@ const CITY_META = {
   yola: { state: "Adamawa", region: "North East" },
 };
 
+// Initiative combo bonuses — pairs that reward coordinated planning
+const INITIATIVE_COMBOS = [
+  { ids: ["roads", "markets"], bonus: { economy: 3, jobs: 2 }, label: "Last-Mile Economy Boost" },
+  { ids: ["transit", "tech-hubs"], bonus: { economy: 4, trust: 3 }, label: "Innovation Corridor" },
+  { ids: ["housing", "transit"], bonus: { trust: 4, mobility: 3 }, label: "Inclusive Growth Package" },
+  { ids: ["health", "vocational"], bonus: { jobs: 4, trust: 3 }, label: "Human Capital Compact" },
+  { ids: ["drainage", "waste"], bonus: { resilience: 4, environment: 4 }, label: "Clean City Foundation" },
+  { ids: ["cleanup", "industrial-power"], bonus: { economy: 3, environment: 3 }, label: "Green Industry Pivot" },
+  { ids: ["water", "health"], bonus: { resilience: 5, trust: 4 }, label: "Basic Services Anchor" },
+  { ids: ["skills", "markets"], bonus: { jobs: 4, economy: 2 }, label: "Informal Economy Compact" },
+];
+
+// City-specific mechanics that fire each round
+const CITY_MECHANICS = {
+  lagos: {
+    label: "Gridlock Cascade",
+    description: "When mobility falls below 35, congestion actively drags the economy.",
+    apply(metrics, roundDelta) {
+      if (metrics.mobility < 35) {
+        return { effects: { economy: -3 }, message: "Gridlock cascade: mobility below 35 is costing the economy. Economy -3." };
+      }
+      return null;
+    },
+  },
+  "port-harcourt": {
+    label: "Oil Revenue",
+    description: "The energy sector generates ₦3B annually, but worsens environmental pressure when unchecked.",
+    apply(metrics) {
+      if (metrics.environment < 35) {
+        return { effects: { budget: 1, environment: -1 }, message: "Oil revenue flows in, but pollution pressure is growing. Budget +1, Environment -1." };
+      }
+      return { effects: { budget: 3 }, message: "Oil sector revenue flows into the city treasury. Budget +3." };
+    },
+  },
+  yenagoa: {
+    label: "Oil Revenue",
+    description: "The energy sector generates ₦3B annually, but worsens environmental pressure when unchecked.",
+    apply(metrics) {
+      if (metrics.environment < 35) {
+        return { effects: { budget: 1, environment: -1 }, message: "Oil revenue flows in, but pollution pressure is growing. Budget +1, Environment -1." };
+      }
+      return { effects: { budget: 3 }, message: "Oil sector revenue flows into the city treasury. Budget +3." };
+    },
+  },
+  kano: {
+    label: "Trade Momentum",
+    description: "Strong commercial networks compound gains — when the economy grows, it grows a little more.",
+    apply(metrics, roundDelta) {
+      if (roundDelta.economy > 0) {
+        return { effects: { economy: 2 }, message: "Trade networks amplify this year's economic gains. Economy +2." };
+      }
+      return null;
+    },
+  },
+  maiduguri: {
+    label: "Stability Premium",
+    description: "Citizens here value stability above all. High resilience accelerates trust recovery.",
+    apply(metrics, roundDelta) {
+      if (metrics.resilience > 55 && roundDelta.trust > 0) {
+        return { effects: { trust: 2 }, message: "Strong resilience is building community trust. Trust +2." };
+      }
+      return null;
+    },
+  },
+  abuja: {
+    label: "Capital Scrutiny",
+    description: "As the national capital, Abuja faces higher public expectations. Trust shifts hit harder.",
+    apply(metrics, roundDelta) {
+      if (roundDelta.trust > 0) {
+        return { effects: { trust: 1 }, message: "National spotlight amplifies the trust gain. Trust +1." };
+      }
+      if (roundDelta.trust < 0) {
+        return { effects: { trust: -1 }, message: "National visibility amplifies the trust loss. Trust -1." };
+      }
+      return null;
+    },
+  },
+};
+
+// Initiatives that generate recurring budget revenue in subsequent rounds
+const REVENUE_INITIATIVES = {
+  markets: { amount: 2, rounds: 2, conditionMetric: "economy", conditionMin: 55 },
+  "tech-hubs": { amount: 2, rounds: 2, conditionMetric: null },
+  "industrial-power": { amount: 3, rounds: 2, conditionMetric: null },
+};
+
+// Campaign scenarios selectable before starting
+const SCENARIOS = [
+  {
+    id: "standard",
+    label: "Standard Term",
+    description: "A regular 6-year civic campaign. Balance everything.",
+  },
+  {
+    id: "election",
+    label: "Federal Election Year",
+    description: "Political pressure is relentless. Trust gains and losses are amplified.",
+  },
+  {
+    id: "infrastructure",
+    label: "Infrastructure Crisis",
+    description: "Mobility and housing drift 50% worse. Neglect costs more.",
+  },
+  {
+    id: "boom",
+    label: "Investment Boom",
+    description: "If your economy is strong, it compounds. But housing pressure accelerates.",
+  },
+];
+
 function clampMetric(value) {
   return Math.max(0, Math.min(Math.round(value), 100));
 }
 
 function createMetricDelta() {
-  return TRACKED_METRICS.reduce((accumulator, key) => {
-    accumulator[key] = 0;
-    return accumulator;
+  return TRACKED_METRICS.reduce((acc, key) => {
+    acc[key] = 0;
+    return acc;
   }, {});
 }
 
@@ -101,39 +211,25 @@ function getCityMeta(cityId) {
 
 function prettyMetricName(key) {
   const labels = {
-    economy: "Economy",
-    mobility: "Mobility",
-    housing: "Housing",
-    resilience: "Resilience",
-    environment: "Environment",
-    jobs: "Jobs",
-    trust: "Trust",
-    budget: "Budget",
-    health: "Health",
+    economy: "Economy", mobility: "Mobility", housing: "Housing",
+    resilience: "Resilience", environment: "Environment", jobs: "Jobs",
+    trust: "Trust", budget: "Budget", health: "Health",
   };
   return labels[key] || key;
 }
 
 function shortMetricName(key) {
   const labels = {
-    economy: "Economy",
-    mobility: "Mobility",
-    housing: "Housing",
-    resilience: "Resilience",
-    environment: "Env",
-    jobs: "Jobs",
-    trust: "Trust",
-    budget: "Budget",
-    health: "Health",
+    economy: "Economy", mobility: "Mobility", housing: "Housing",
+    resilience: "Resilience", environment: "Env", jobs: "Jobs",
+    trust: "Trust", budget: "Budget", health: "Health",
   };
   return labels[key] || prettyMetricName(key);
 }
 
 function mergeEffects(target, effects = {}) {
   Object.entries(effects).forEach(([key, value]) => {
-    if (typeof target[key] !== "number") {
-      target[key] = 0;
-    }
+    if (typeof target[key] !== "number") target[key] = 0;
     target[key] += value;
   });
 }
@@ -156,11 +252,14 @@ export default {
       cityPickerOpen: false,
       flashOverlay: "",
       flashActive: false,
+      scenarios: SCENARIOS,
+      selectedScenario: "standard",
     };
   },
+
   computed: {
     activeCity() {
-      return this.cityLibrary.find((city) => city.id === this.activeCityId) || null;
+      return this.cityLibrary.find((c) => c.id === this.activeCityId) || null;
     },
     activeMeta() {
       return this.activeCity ? getCityMeta(this.activeCity.id) : { state: "", region: "" };
@@ -174,23 +273,16 @@ export default {
     groupedCities() {
       return REGION_ORDER.map((region) => ({
         region,
-        cities: this.cityLibrary.filter((city) => getCityMeta(city.id).region === region),
+        cities: this.cityLibrary.filter((c) => getCityMeta(c.id).region === region),
       }));
     },
     featuredCities() {
       const preferred = ["lagos", "abuja", "kano", "port-harcourt", "maiduguri", "enugu"];
-      const featured = preferred
-        .map((id) => this.cityLibrary.find((city) => city.id === id))
-        .filter(Boolean);
-      if (featured.length >= 6) {
-        return featured;
-      }
-      return this.cityLibrary.slice(0, 6);
+      const featured = preferred.map((id) => this.cityLibrary.find((c) => c.id === id)).filter(Boolean);
+      return featured.length >= 6 ? featured : this.cityLibrary.slice(0, 6);
     },
     nationalAverageScore() {
-      if (this.cityLibrary.length === 0) {
-        return 0;
-      }
+      if (this.cityLibrary.length === 0) return 0;
       const total = this.cityLibrary.reduce((sum, city) => sum + this.calculateScore(city.metrics), 0);
       return Math.round(total / this.cityLibrary.length);
     },
@@ -204,9 +296,7 @@ export default {
     },
     renderedMetrics() {
       const source = this.displayedMetrics || (this.state ? this.state.metrics : {});
-      if (!source) {
-        return [];
-      }
+      if (!source) return [];
       return METRIC_CONFIG.map((metric) => {
         const value = clampMetric(source[metric.key]);
         const actualValue = clampMetric(this.state.metrics[metric.key]);
@@ -222,9 +312,7 @@ export default {
       });
     },
     visibleInitiatives() {
-      if (!this.activeCity || !this.state) {
-        return [];
-      }
+      if (!this.activeCity || !this.state) return [];
       return this.activeCity.initiatives
         .map((id) => this.initiativeLibrary[id])
         .filter(Boolean)
@@ -239,35 +327,30 @@ export default {
             isLocked: cooldown > 0,
             isSelected,
             preview,
-            positiveBadges: effectEntries
-              .filter(([, value]) => value > 0)
-              .slice(0, 2)
-              .map(([key]) => `+${shortMetricName(key)}`),
-            negativeBadges: effectEntries
-              .filter(([, value]) => value < 0)
-              .slice(0, 2)
-              .map(([key]) => `-${shortMetricName(key)}`),
+            positiveBadges: effectEntries.filter(([, v]) => v > 0).slice(0, 2).map(([k]) => `+${shortMetricName(k)}`),
+            negativeBadges: effectEntries.filter(([, v]) => v < 0).slice(0, 2).map(([k]) => `-${shortMetricName(k)}`),
           };
         });
     },
     selectionStatus() {
-      if (!this.state) {
-        return "";
-      }
+      if (!this.state) return "";
       const count = this.state.selectedInitiatives.length;
+      const maxSlots = this.maxInitiativeSlots;
       const projection = this.getCurrentPackageProjection();
       const label = count === 1 ? "initiative" : "initiatives";
       const budgetFragment = count > 0 ? ` · projected budget ₦${projection.budget}B` : "";
       const warningFragment = projection.warning ? ` · ${projection.warning}` : "";
-      return `${count} of 2 ${label} selected${budgetFragment}${warningFragment}`;
+      const crisisFragment = this.state.administrationCrisis ? " · crisis: 1 initiative max" : "";
+      return `${count} of ${maxSlots} ${label} selected${budgetFragment}${warningFragment}${crisisFragment}`;
     },
     recentHistory() {
-      if (!this.state) {
-        return [];
-      }
+      if (!this.state) return [];
       return [...this.state.roundLog].reverse();
     },
     finalScore() {
+      return this.state ? this.calculateScore(this.state.metrics) : 0;
+    },
+    currentScore() {
       return this.state ? this.calculateScore(this.state.metrics) : 0;
     },
     legacyStrongest() {
@@ -289,7 +372,26 @@ export default {
     legacyBullets() {
       return this.state ? this.buildLegacyBullets() : [];
     },
+    activeCombo() {
+      if (!this.state || this.state.selectedInitiatives.length !== 2) return null;
+      const [a, b] = this.state.selectedInitiatives;
+      return INITIATIVE_COMBOS.find((c) => c.ids.includes(a) && c.ids.includes(b)) || null;
+    },
+    cityMechanic() {
+      if (!this.activeCity) return null;
+      return CITY_MECHANICS[this.activeCity.id] || null;
+    },
+    activeMitigations() {
+      if (!this.state?.pendingEvent?.mitigations) return [];
+      return this.state.pendingEvent.mitigations.filter((mit) =>
+        this.matchesCondition(this.state.metrics[mit.metric] ?? 0, mit.operator, mit.value)
+      );
+    },
+    maxInitiativeSlots() {
+      return this.state?.administrationCrisis ? 1 : 2;
+    },
   },
+
   methods: {
     async initialize() {
       const [cities, initiatives, events] = await Promise.all([
@@ -300,28 +402,27 @@ export default {
       this.cityLibrary = cities;
       this.initiativeLibrary = initiatives;
       this.eventLibrary = events;
-      this.activeCityId = this.cityLibrary.find((city) => city.id === "lagos")?.id || this.cityLibrary[0]?.id || null;
+      this.activeCityId = this.cityLibrary.find((c) => c.id === "lagos")?.id || this.cityLibrary[0]?.id || null;
       this.state = this.activeCityId ? this.createState(this.activeCityId) : null;
       this.displayedMetrics = this.state ? { ...this.state.metrics } : null;
       this.applyCityTheme();
     },
+
     async loadCities() {
       const response = await fetch("./cities.json");
-      if (!response.ok) {
-        throw new Error(`Failed to load cities.json: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to load cities.json: ${response.status}`);
       const cities = await response.json();
-      return cities.sort((left, right) => left.name.localeCompare(right.name));
+      return cities.sort((a, b) => a.name.localeCompare(b.name));
     },
+
     async loadJsonFile(path) {
       const response = await fetch(path);
-      if (!response.ok) {
-        throw new Error(`Failed to load ${path}: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to load ${path}: ${response.status}`);
       return response.json();
     },
+
     createState(cityId) {
-      const city = this.cityLibrary.find((entry) => entry.id === cityId);
+      const city = this.cityLibrary.find((c) => c.id === cityId);
       const openingCrisis = this.getOpeningCrisis(city);
       return {
         cityId,
@@ -336,13 +437,29 @@ export default {
         currentAlert: openingCrisis,
         currentVerdict: openingCrisis.verdict,
         roundLog: [],
+        // Event choice system
+        pendingEvent: null,
+        awaitingEventChoice: false,
+        pendingRoundDelta: null,
+        pendingPreviousMetrics: null,
+        // Queues
+        delayedEffectsQueue: [],
+        passiveIncomeQueue: [],
+        // Scenario
+        scenario: this.selectedScenario || "standard",
+        // Crisis state
+        administrationCrisis: false,
+        // Last-round display info
+        lastCityMechanicEffect: null,
+        lastPassiveIncome: null,
+        lastMitigationsApplied: [],
+        lastComboLabel: null,
       };
     },
+
     getCityTheme(cityId) {
-      const specificTheme = CITY_THEMES[cityId];
-      if (specificTheme) {
-        return specificTheme;
-      }
+      const specific = CITY_THEMES[cityId];
+      if (specific) return specific;
       const region = getCityMeta(cityId).region;
       if (region === "South South") return { accent: "#1d7561", soft: "#d8e9e2", eventBg: "#ebddd4", eventBorder: "#b56e5d", eventText: "#7f3127" };
       if (region === "South West") return { accent: "#6a9518", soft: "#dfe8c6", eventBg: "#f1e5cf", eventBorder: "#d39b44", eventText: "#895712" };
@@ -352,22 +469,24 @@ export default {
       if (region === "North Central") return { accent: "#4d7d60", soft: "#d9e6df", eventBg: "#e9e0d2", eventBorder: "#a78f67", eventText: "#5f6c58" };
       return DEFAULT_THEME;
     },
-    clampMetric(value) {
-      return clampMetric(value);
-    },
-    prettyMetricName(key) {
-      return prettyMetricName(key);
-    },
-    getCityMeta(cityId) {
-      return getCityMeta(cityId);
-    },
+
+    clampMetric: clampMetric,
+    prettyMetricName: prettyMetricName,
+    getCityMeta: getCityMeta,
+
     metricBarWidth(value) {
       return `${clampMetric(value)}%`;
     },
+
+    formatEffects(effects) {
+      return Object.entries(effects)
+        .filter(([, v]) => v !== 0)
+        .map(([k, v]) => `${prettyMetricName(k)} ${v > 0 ? "+" : ""}${v}`)
+        .join(", ");
+    },
+
     applyCityTheme() {
-      if (!this.activeCity) {
-        return;
-      }
+      if (!this.activeCity) return;
       const theme = this.getCityTheme(this.activeCity.id);
       document.documentElement.style.setProperty("--city-accent", theme.accent);
       document.documentElement.style.setProperty("--city-soft", theme.soft);
@@ -375,120 +494,57 @@ export default {
       document.documentElement.style.setProperty("--city-event-border", theme.eventBorder);
       document.documentElement.style.setProperty("--city-event-text", theme.eventText);
     },
+
     getOpeningCrisis(city) {
       const meta = getCityMeta(city.id);
       const crises = {
-        lagos: {
-          title: "Gridlock is eating the city's edge",
-          body: "Commuters are losing hours to congestion while rent and flood pressure keep tightening around growth corridors.",
-          summary: "Mobility and housing are under strain before your first move.",
-          verdict: "The city is impatient, ambitious, and already overheating.",
-        },
-        abuja: {
-          title: "Expansion is outrunning affordability",
-          body: "Land pressure and commuter friction are rising faster than the capital's infrastructure can absorb.",
-          summary: "Citizens expect order, but the city is stretching beyond it.",
-          verdict: "The capital looks polished, but the cracks are widening underneath.",
-        },
-        "port-harcourt": {
-          title: "Pollution is crushing legitimacy",
-          body: "Oil-linked wealth still matters, but polluted corridors and distrust are undermining every public promise.",
-          summary: "The city starts rich in potential and weak in confidence.",
-          verdict: "People believe the city can pay for change; they do not yet believe it will.",
-        },
-        kano: {
-          title: "Trade is strong, but systems are brittle",
-          body: "Market depth is real, yet water pressure and weak industrial reliability are dragging on momentum.",
-          summary: "Commerce wants to move faster than infrastructure allows.",
-          verdict: "The city is productive, but one hard shock could stall it.",
-        },
-        maiduguri: {
-          title: "Recovery is still unfinished",
-          body: "Reconstruction pressure is colliding with service delivery gaps and fragile household confidence.",
-          summary: "Every early choice will be judged through the lens of stability.",
-          verdict: "This is a city asking for proof before trust.",
-        },
+        lagos: { title: "Gridlock is eating the city's edge", body: "Commuters are losing hours to congestion while rent and flood pressure keep tightening around growth corridors.", summary: "Mobility and housing are under strain before your first move.", verdict: "The city is impatient, ambitious, and already overheating." },
+        abuja: { title: "Expansion is outrunning affordability", body: "Land pressure and commuter friction are rising faster than the capital's infrastructure can absorb.", summary: "Citizens expect order, but the city is stretching beyond it.", verdict: "The capital looks polished, but the cracks are widening underneath." },
+        "port-harcourt": { title: "Pollution is crushing legitimacy", body: "Oil-linked wealth still matters, but polluted corridors and distrust are undermining every public promise.", summary: "The city starts rich in potential and weak in confidence.", verdict: "People believe the city can pay for change; they do not yet believe it will." },
+        kano: { title: "Trade is strong, but systems are brittle", body: "Market depth is real, yet water pressure and weak industrial reliability are dragging on momentum.", summary: "Commerce wants to move faster than infrastructure allows.", verdict: "The city is productive, but one hard shock could stall it." },
+        maiduguri: { title: "Recovery is still unfinished", body: "Reconstruction pressure is colliding with service delivery gaps and fragile household confidence.", summary: "Every early choice will be judged through the lens of stability.", verdict: "This is a city asking for proof before trust." },
       };
-      if (crises[city.id]) {
-        return crises[city.id];
-      }
-      if (meta.region === "South South") {
-        return {
-          title: `${city.name} is living with environmental drag`,
-          body: "Water, waste, and uneven infrastructure are taking a toll on confidence even where revenue opportunities exist.",
-          summary: "Resilience and legitimacy are the first tests of your leadership.",
-          verdict: "The city is watching whether growth will finally feel fair.",
-        };
-      }
-      if (meta.region === "North East") {
-        return {
-          title: `${city.name} starts under resilience pressure`,
-          body: "Service gaps and social strain mean basic stability matters as much as headline investment.",
-          summary: "If systems wobble early, recovery gets harder.",
-          verdict: "This city needs steadiness before spectacle.",
-        };
-      }
-      if (meta.region === "North West") {
-        return {
-          title: `${city.name} needs stronger urban systems`,
-          body: "Trade energy is present, but water security, roads, and trust are not strong enough for the next stage of growth.",
-          summary: "Commercial momentum exists, but the urban backbone is thin.",
-          verdict: "The city is ready to move if you can stop it from grinding itself down.",
-        };
-      }
-      if (meta.region === "South West") {
-        return {
-          title: `${city.name} is feeling the cost of growth`,
-          body: "Housing pressure and traffic are rising faster than service delivery, squeezing the city's most productive districts.",
-          summary: "The engine is running, but the chassis is under stress.",
-          verdict: "People can feel the upside of growth and the friction of it at the same time.",
-        };
-      }
-      if (meta.region === "South East") {
-        return {
-          title: `${city.name} has talent but needs lift`,
-          body: "Enterprise is strong, yet mobility and public systems are not keeping pace with economic ambition.",
-          summary: "The city has energy, but not enough shared infrastructure.",
-          verdict: "This city feels clever, restless, and underserved.",
-        };
-      }
-      return {
-        title: `${city.name} enters a fragile balance`,
-        body: "The city has room to grow, but core systems are not yet strong enough to carry stress without consequences.",
-        summary: `Your first year in ${meta.state} will set the tone for everything that follows.`,
-        verdict: "The city is balanced on potential, not certainty.",
-      };
+      if (crises[city.id]) return crises[city.id];
+      if (meta.region === "South South") return { title: `${city.name} is living with environmental drag`, body: "Water, waste, and uneven infrastructure are taking a toll on confidence even where revenue opportunities exist.", summary: "Resilience and legitimacy are the first tests of your leadership.", verdict: "The city is watching whether growth will finally feel fair." };
+      if (meta.region === "North East") return { title: `${city.name} starts under resilience pressure`, body: "Service gaps and social strain mean basic stability matters as much as headline investment.", summary: "If systems wobble early, recovery gets harder.", verdict: "This city needs steadiness before spectacle." };
+      if (meta.region === "North West") return { title: `${city.name} needs stronger urban systems`, body: "Trade energy is present, but water security, roads, and trust are not strong enough for the next stage of growth.", summary: "Commercial momentum exists, but the urban backbone is thin.", verdict: "The city is ready to move if you can stop it from grinding itself down." };
+      if (meta.region === "South West") return { title: `${city.name} is feeling the cost of growth`, body: "Housing pressure and traffic are rising faster than service delivery, squeezing the city's most productive districts.", summary: "The engine is running, but the chassis is under stress.", verdict: "People can feel the upside of growth and the friction of it at the same time." };
+      if (meta.region === "South East") return { title: `${city.name} has talent but needs lift`, body: "Enterprise is strong, yet mobility and public systems are not keeping pace with economic ambition.", summary: "The city has energy, but not enough shared infrastructure.", verdict: "This city feels clever, restless, and underserved." };
+      return { title: `${city.name} enters a fragile balance`, body: "The city has room to grow, but core systems are not yet strong enough to carry stress without consequences.", summary: `Your first year in ${meta.state} will set the tone for everything that follows.`, verdict: "The city is balanced on potential, not certainty." };
     },
+
     cityCardClasses(cityId) {
       const isActive = cityId === this.activeCityId;
       return isActive
         ? "border-[#96c633] bg-[#dde7c9] text-[#395d0c]"
         : "border-[#4c4944] bg-[#282723] text-[#f3ede3] hover:border-[#77736a] hover:bg-[#2d2c28]";
     },
+
     cityStateClasses(cityId) {
       return cityId === this.activeCityId ? "text-[#567819]" : "text-[#a6a091]";
     },
+
     metricCardClasses(metric) {
-      return metric.isDanger
-        ? "border border-[#8f2b24] shadow-[0_0_0_1px_rgba(173,48,39,0.22)]"
-        : "";
+      return metric.isDanger ? "border border-[#8f2b24] shadow-[0_0_0_1px_rgba(173,48,39,0.22)]" : "";
     },
+
     initiativeCardClasses(initiative) {
       return initiative.isSelected
         ? "border-[#9cca33] bg-[#dde7c9] text-[#f4f0e6]"
         : "border-[#4a4843] bg-card text-[#f4f0e6]";
     },
+
     initiativeToggleClasses(initiative) {
-      if (initiative.isLocked) {
-        return "border-[#5d3c39] bg-[#2a1d1c] text-[#c59b95] cursor-not-allowed";
-      }
+      if (initiative.isLocked) return "border-[#5d3c39] bg-[#2a1d1c] text-[#c59b95] cursor-not-allowed";
       return initiative.isSelected
         ? "border-[#9cca33] bg-[#dfe8c6] text-[#395d0c]"
         : "border-[#5c5a55] bg-transparent text-[#f3eee4]";
     },
+
     previewBadgeClasses(delta) {
       return delta >= 0 ? "bg-[#e4efcf] text-[#447313]" : "bg-[#f3dddd] text-[#b3362d]";
     },
+
     handleCityChange(cityId) {
       this.activeCityId = cityId;
       this.state = this.createState(cityId);
@@ -496,27 +552,32 @@ export default {
       this.cityPickerOpen = false;
       this.applyCityTheme();
     },
+
     startCampaign(cityId = this.activeCityId) {
-      if (cityId) {
-        this.activeCityId = cityId;
-      }
+      if (cityId) this.activeCityId = cityId;
       this.state = this.createState(this.activeCityId);
+      this.state.scenario = this.selectedScenario;
       this.displayedMetrics = { ...this.state.metrics };
       this.historyVisible = false;
       this.cityPickerOpen = false;
       this.hasStarted = true;
       this.applyCityTheme();
     },
+
     getInitiativePreview(initiative) {
       const selectedSet = this.state.selectedInitiatives.filter((id) => id !== initiative.id);
       const projectedEffects = createMetricDelta();
       selectedSet.forEach((id) => {
-        const selectedInitiative = this.initiativeLibrary[id];
-        if (selectedInitiative) {
-          mergeEffects(projectedEffects, selectedInitiative.effects);
-        }
+        const sel = this.initiativeLibrary[id];
+        if (sel) mergeEffects(projectedEffects, sel.effects);
       });
       mergeEffects(projectedEffects, initiative.effects);
+      // Add combo bonus if this would complete a combo
+      const wouldBeSelected = [...selectedSet, initiative.id];
+      if (wouldBeSelected.length === 2) {
+        const combo = INITIATIVE_COMBOS.find((c) => c.ids.includes(wouldBeSelected[0]) && c.ids.includes(wouldBeSelected[1]));
+        if (combo) mergeEffects(projectedEffects, combo.bonus);
+      }
       const metrics = Object.entries(projectedEffects)
         .filter(([, delta]) => delta !== 0)
         .map(([key, delta]) => ({
@@ -526,23 +587,19 @@ export default {
           to: clampMetric((this.state.metrics[key] ?? 0) + delta),
           delta,
         }))
-        .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta));
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
       const projectedBudget = clampMetric((this.state.metrics.budget ?? 0) + (projectedEffects.budget ?? 0));
       let budgetWarning = "";
-      if (projectedBudget < 15) {
-        budgetWarning = `Treasury danger: this package would leave only ₦${projectedBudget}B in budget.`;
-      } else if (projectedBudget < 25) {
-        budgetWarning = `Budget strain: this package drops the treasury to ₦${projectedBudget}B.`;
-      }
+      if (projectedBudget < 15) budgetWarning = `Treasury danger: this package would leave only ₦${projectedBudget}B.`;
+      else if (projectedBudget < 25) budgetWarning = `Budget strain: this package drops the treasury to ₦${projectedBudget}B.`;
       return { metrics, projectedBudget, budgetWarning };
     },
+
     getCurrentPackageProjection() {
       const effects = createMetricDelta();
       this.state.selectedInitiatives.forEach((id) => {
         const initiative = this.initiativeLibrary[id];
-        if (initiative) {
-          mergeEffects(effects, initiative.effects);
-        }
+        if (initiative) mergeEffects(effects, initiative.effects);
       });
       const budget = clampMetric((this.state.metrics.budget ?? 0) + (effects.budget ?? 0));
       let warning = "";
@@ -550,44 +607,43 @@ export default {
       else if (budget < 25) warning = "budget strain";
       return { budget, warning };
     },
+
     toggleInitiative(id) {
-      if (this.state.gameOver || (this.state.cooldowns[id] || 0) > 0) {
-        return;
-      }
+      if (this.state.gameOver || this.state.awaitingEventChoice || (this.state.cooldowns[id] || 0) > 0) return;
       const isSelected = this.state.selectedInitiatives.includes(id);
       if (isSelected) {
-        this.state.selectedInitiatives = this.state.selectedInitiatives.filter((entry) => entry !== id);
+        this.state.selectedInitiatives = this.state.selectedInitiatives.filter((e) => e !== id);
         return;
       }
-      if (this.state.selectedInitiatives.length >= 2) {
+      if (this.state.selectedInitiatives.length >= this.maxInitiativeSlots) {
         this.state.currentAlert = {
-          title: "Planning cap reached",
-          body: "You can only push two major initiatives in a single year.",
+          title: this.state.administrationCrisis ? "Crisis limits your mandate" : "Planning cap reached",
+          body: this.state.administrationCrisis
+            ? "Under an administration crisis, only one major initiative can be pushed this year. Recover public trust first."
+            : "You can only push two major initiatives in a single year.",
           summary: "Drop one selected initiative before adding another.",
         };
         return;
       }
       this.state.selectedInitiatives = [...this.state.selectedInitiatives, id];
     },
+
     updateCooldowns(usedInitiatives) {
-      const nextCooldowns = {};
+      const next = {};
       Object.entries(this.state.cooldowns).forEach(([id, turns]) => {
-        const nextValue = turns - 1;
-        if (nextValue > 0) nextCooldowns[id] = nextValue;
+        const n = turns - 1;
+        if (n > 0) next[id] = n;
       });
       usedInitiatives.forEach((id) => {
         const initiative = this.initiativeLibrary[id];
-        if (initiative) {
-          nextCooldowns[id] = initiative.cost >= 14 ? 2 : 1;
-        }
+        if (initiative) next[id] = initiative.cost >= 14 ? 2 : 1;
       });
-      this.state.cooldowns = nextCooldowns;
+      this.state.cooldowns = next;
     },
+
     applyEffectsToState(effects, deltaTrackers = []) {
       Object.entries(effects).forEach(([key, value]) => {
-        if (typeof this.state.metrics[key] !== "number") {
-          this.state.metrics[key] = 50;
-        }
+        if (typeof this.state.metrics[key] !== "number") this.state.metrics[key] = 50;
         this.state.metrics[key] += value;
         deltaTrackers.forEach((tracker) => {
           if (typeof tracker[key] !== "number") tracker[key] = 0;
@@ -595,19 +651,18 @@ export default {
         });
       });
     },
+
     applyConditionalEffects(conditionalEffects, deltaTrackers = []) {
       for (const condition of conditionalEffects) {
-        if (!condition.metric) {
-          this.applyEffectsToState(condition.effects || {}, deltaTrackers);
-          return;
-        }
-        const metricValue = this.state.metrics[condition.metric] ?? 0;
-        if (this.matchesCondition(metricValue, condition.operator, condition.value)) {
+        if (!condition.metric) { this.applyEffectsToState(condition.effects || {}, deltaTrackers); return; }
+        const val = this.state.metrics[condition.metric] ?? 0;
+        if (this.matchesCondition(val, condition.operator, condition.value)) {
           this.applyEffectsToState(condition.effects || {}, deltaTrackers);
           return;
         }
       }
     },
+
     matchesCondition(metricValue, operator, expectedValue) {
       switch (operator) {
         case "<": return metricValue < expectedValue;
@@ -618,15 +673,160 @@ export default {
         default: return false;
       }
     },
+
     applyPassiveDrift(roundDelta) {
-      const drift = this.activeCity.drift || {};
+      const drift = { ...this.activeCity.drift };
+      // Infrastructure scenario: mobility and housing drift are 50% worse
+      if (this.state.scenario === "infrastructure") {
+        if (typeof drift.mobility === "number" && drift.mobility < 0) drift.mobility = Math.floor(drift.mobility * 1.5);
+        if (typeof drift.housing === "number" && drift.housing < 0) drift.housing = Math.floor(drift.housing * 1.5);
+      }
+      // Boom scenario: housing drift doubles
+      if (this.state.scenario === "boom") {
+        if (typeof drift.housing === "number" && drift.housing < 0) drift.housing = Math.floor(drift.housing * 1.8);
+      }
       this.applyEffectsToState(drift, [roundDelta]);
     },
+
+    applyScenarioModifiers(roundDelta) {
+      if (!this.state.scenario || this.state.scenario === "standard") return;
+      if (this.state.scenario === "election") {
+        // Amplify trust changes (add the sign of current trust delta once more)
+        if (roundDelta.trust > 0) this.applyEffectsToState({ trust: 1 }, [roundDelta]);
+        else if (roundDelta.trust < 0) this.applyEffectsToState({ trust: -1 }, [roundDelta]);
+      }
+      if (this.state.scenario === "boom") {
+        // Strong economy compounds itself
+        if (this.state.metrics.economy >= 55) this.applyEffectsToState({ economy: 3 }, [roundDelta]);
+      }
+    },
+
+    applyCityMechanic(roundDelta) {
+      const mechanic = CITY_MECHANICS[this.activeCity?.id];
+      if (!mechanic) { this.state.lastCityMechanicEffect = null; return; }
+      const result = mechanic.apply(this.state.metrics, roundDelta);
+      if (result) {
+        this.applyEffectsToState(result.effects, [roundDelta]);
+        this.state.lastCityMechanicEffect = result.message;
+      } else {
+        this.state.lastCityMechanicEffect = null;
+      }
+    },
+
+    applyComboBonus(roundDelta) {
+      const selected = this.state.selectedInitiatives;
+      if (selected.length !== 2) return null;
+      const combo = INITIATIVE_COMBOS.find((c) => c.ids.includes(selected[0]) && c.ids.includes(selected[1]));
+      if (!combo) return null;
+      this.applyEffectsToState(combo.bonus, [roundDelta]);
+      this.state.lastComboLabel = combo.label;
+      return combo;
+    },
+
+    applyDelayedEffects(roundDelta) {
+      const pending = this.state.delayedEffectsQueue.filter((e) => e.applyOnRound === this.state.round);
+      const remaining = this.state.delayedEffectsQueue.filter((e) => e.applyOnRound !== this.state.round);
+      pending.forEach((e) => this.applyEffectsToState(e.effects, [roundDelta]));
+      this.state.delayedEffectsQueue = remaining;
+    },
+
+    applyPassiveIncome(roundDelta) {
+      if (this.state.passiveIncomeQueue.length === 0) { this.state.lastPassiveIncome = null; return; }
+      let totalEarned = 0;
+      const sources = [];
+      const remaining = [];
+      this.state.passiveIncomeQueue.forEach((entry) => {
+        if (entry.remainingRounds > 0) {
+          this.applyEffectsToState({ budget: entry.amount }, [roundDelta]);
+          totalEarned += entry.amount;
+          sources.push(`+₦${entry.amount}B from ${entry.label}`);
+          if (entry.remainingRounds - 1 > 0) remaining.push({ ...entry, remainingRounds: entry.remainingRounds - 1 });
+        }
+      });
+      this.state.passiveIncomeQueue = remaining;
+      this.state.lastPassiveIncome = totalEarned > 0 ? sources.join(", ") : null;
+    },
+
+    queuePassiveIncome(initiativeId) {
+      const rev = REVENUE_INITIATIVES[initiativeId];
+      if (!rev) return;
+      if (rev.conditionMetric && this.state.metrics[rev.conditionMetric] < rev.conditionMin) return;
+      if (this.state.round + rev.rounds > TOTAL_ROUNDS) return; // won't outlast the game
+      // Remove existing queue entry for same initiative to reset timer
+      this.state.passiveIncomeQueue = this.state.passiveIncomeQueue.filter((e) => e.source !== initiativeId);
+      const initiative = this.initiativeLibrary[initiativeId];
+      this.state.passiveIncomeQueue.push({
+        source: initiativeId,
+        label: initiative?.title || initiativeId,
+        amount: rev.amount,
+        remainingRounds: rev.rounds,
+      });
+    },
+
+    applyEventMitigations(event, roundDelta) {
+      if (!event?.mitigations) { this.state.lastMitigationsApplied = []; return; }
+      const applied = [];
+      event.mitigations.forEach((mit) => {
+        if (this.matchesCondition(this.state.metrics[mit.metric] ?? 0, mit.operator, mit.value)) {
+          this.applyEffectsToState(mit.bonus, [roundDelta]);
+          applied.push(mit.label);
+        }
+      });
+      this.state.lastMitigationsApplied = applied;
+    },
+
+    checkCollapseConditions() {
+      // Check trust collapse first (most severe check before admin crisis)
+      if (this.state.metrics.trust < 15) {
+        return {
+          mode: "political-collapse",
+          alert: {
+            title: "Political collapse",
+            body: `Public confidence has completely collapsed. ${this.activeCity.name}'s administration has lost its mandate to govern.`,
+            summary: "The city is ungovernable. Your term ends before its time.",
+          },
+          verdict: "History records an administration that lost the people before it could help them.",
+          flashColor: "rgba(95, 20, 20, 0.48)",
+        };
+      }
+      // Budget bankruptcy
+      if (this.state.metrics.budget <= 0) {
+        return {
+          mode: "receivership",
+          alert: {
+            title: "Federal receivership",
+            body: `${this.activeCity.name} has run out of money. The federal government has stepped in to manage the city's finances.`,
+            summary: "Debt has become the story. Control has slipped out of your hands.",
+          },
+          verdict: "History records the collapse as a failure of restraint.",
+          flashColor: "rgba(95, 20, 20, 0.48)",
+        };
+      }
+      // Multi-system breakdown (3+ non-budget metrics below 25)
+      const criticalMetrics = TRACKED_METRICS.filter(
+        (k) => k !== "budget" && clampMetric(this.state.metrics[k]) < 25
+      );
+      if (criticalMetrics.length >= 3) {
+        return {
+          mode: "breakdown",
+          alert: {
+            title: "System breakdown",
+            body: `${this.activeCity.name} has crossed multiple critical thresholds. The city can no longer absorb further pressure.`,
+            summary: `Critical failures in ${criticalMetrics.slice(0, 3).map(prettyMetricName).join(", ")}.`,
+          },
+          verdict: "History records a city that reached the limits of its capacity under this administration.",
+          flashColor: "rgba(95, 20, 20, 0.48)",
+        };
+      }
+      return null;
+    },
+
     rollEvent() {
+      if (!this.activeCity.events || this.activeCity.events.length === 0) return null;
       let pool = this.activeCity.events
         .map((id) => (this.eventLibrary[id] ? { id, ...this.eventLibrary[id] } : null))
         .filter(Boolean)
-        .filter((event) => !this.state.usedEvents.includes(event.id));
+        .filter((e) => !this.state.usedEvents.includes(e.id));
       if (pool.length === 0) {
         this.state.usedEvents = [];
         pool = this.activeCity.events
@@ -635,26 +835,27 @@ export default {
       }
       const event = pool[Math.floor(Math.random() * pool.length)];
       if (event) this.state.usedEvents.push(event.id);
-      return event;
+      return event || null;
     },
+
     normaliseMetrics() {
       Object.keys(this.state.metrics).forEach((key) => {
-        if (key === "budget") {
-          this.state.metrics[key] = Math.max(0, Math.min(this.state.metrics[key], 100));
-          return;
-        }
-        this.state.metrics[key] = clampMetric(this.state.metrics[key]);
+        this.state.metrics[key] = key === "budget"
+          ? Math.max(0, Math.min(this.state.metrics[key], 100))
+          : clampMetric(this.state.metrics[key]);
       });
     },
+
     buildDeltaSummary(delta) {
       const parts = Object.entries(delta)
-        .filter(([, value]) => value !== 0)
-        .map(([key, value]) => `${prettyMetricName(key)} ${value > 0 ? "+" : ""}${value}`);
+        .filter(([, v]) => v !== 0)
+        .map(([k, v]) => `${prettyMetricName(k)} ${v > 0 ? "+" : ""}${v}`);
       return parts.length > 0 ? `${parts.join(", ")}.` : "No measurable shift this year.";
     },
+
     buildVerdict(roundDelta, metrics) {
-      const positives = ["economy", "jobs", "trust", "resilience"].filter((key) => roundDelta[key] > 0);
-      const negatives = ["mobility", "housing", "environment", "budget", "trust", "resilience"].filter((key) => roundDelta[key] < 0);
+      const positives = ["economy", "jobs", "trust", "resilience"].filter((k) => roundDelta[k] > 0);
+      const negatives = ["mobility", "housing", "environment", "budget", "trust", "resilience"].filter((k) => roundDelta[k] < 0);
       if (metrics.trust < 30) return "The city mood is souring fast, and patience is running out.";
       if (metrics.budget < 25) return "The city is still functioning, but the treasury is starting to look nervous.";
       if (metrics.resilience < 30 || metrics.environment < 30) return "Growth is no longer the story; fragility is.";
@@ -663,6 +864,7 @@ export default {
       if (positives.length === 0 && negatives.length >= 2) return "This year felt like the city pushing back.";
       return "The city is moving, but not yet in one clear direction.";
     },
+
     buildLegacyVerdict(metrics) {
       const score = this.calculateScore(metrics);
       if (score >= 72) return "History remembers your term as the moment the city found its footing.";
@@ -670,16 +872,20 @@ export default {
       if (metrics.trust < 35 || metrics.budget < 20) return "History remembers a city that survived you, not because of you.";
       return "History remembers ambition, but not enough balance to sustain it.";
     },
+
     findStrongestMetrics(metrics) {
-      return [...TRACKED_METRICS].sort((left, right) => clampMetric(metrics[right]) - clampMetric(metrics[left])).slice(0, 2);
+      return [...TRACKED_METRICS].sort((a, b) => clampMetric(metrics[b]) - clampMetric(metrics[a])).slice(0, 2);
     },
+
     findWeakestMetrics(metrics) {
-      return [...TRACKED_METRICS].sort((left, right) => clampMetric(metrics[left]) - clampMetric(metrics[right])).slice(0, 2);
+      return [...TRACKED_METRICS].sort((a, b) => clampMetric(metrics[a]) - clampMetric(metrics[b])).slice(0, 2);
     },
+
     calculateScore(metrics) {
       const total = TRACKED_METRICS.reduce((sum, key) => sum + clampMetric(metrics[key]), 0);
       return Math.round(total / TRACKED_METRICS.length);
     },
+
     buildLegacyBullets() {
       const strong = this.findStrongestMetrics(this.state.metrics);
       const weak = this.findWeakestMetrics(this.state.metrics);
@@ -689,7 +895,7 @@ export default {
           initiativeCounts[title] = (initiativeCounts[title] || 0) + 1;
         });
       });
-      const signatureMove = Object.entries(initiativeCounts).sort((left, right) => right[1] - left[1])[0]?.[0];
+      const signatureMove = Object.entries(initiativeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
       const bullets = [
         `${this.activeCity.name} finished with its strongest footing in ${strong.map(prettyMetricName).join(" and ")}.`,
         `The administration never fully solved ${weak.map(prettyMetricName).join(" and ")}.`,
@@ -699,35 +905,40 @@ export default {
       ];
       if (this.state.metrics.trust >= 65) bullets.push("Citizens leave your era with more confidence in the city than they had at the start.");
       else if (this.state.metrics.trust < 40) bullets.push("Even where conditions improved, public faith in leadership never fully recovered.");
+      if (this.state.scenario !== "standard") {
+        const scenarioLabel = SCENARIOS.find((s) => s.id === this.state.scenario)?.label;
+        if (scenarioLabel) bullets.push(`This term was played under ${scenarioLabel} conditions.`);
+      }
       return bullets;
     },
+
     buildHistoryMemory(score, metrics) {
       if (score >= 75) return "As a reform era that made competence visible in everyday life.";
       if (score >= 60) return "As a stabilizing term that improved some systems but left hard trade-offs unresolved.";
       if (metrics.trust < 40) return "As an era of strained legitimacy, where progress never fully convinced the public.";
       return "As a difficult term that promised more balance than it ultimately delivered.";
     },
+
     buildNewspaperHeadline(cityName, score) {
       if (score >= 75) return `${cityName} Finds Its Footing`;
       if (score >= 60) return `${cityName} Ends On A Narrow Gain`;
       if (score >= 45) return `${cityName} Leaves A Divided Ledger`;
       return `${cityName} Staggers To The Finish`;
     },
+
     animateMetrics(fromMetrics, toMetrics) {
-      if (this.animationFrameId) {
-        cancelAnimationFrame(this.animationFrameId);
-      }
+      if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
       const start = performance.now();
       const duration = 850;
       this.displayedMetrics = { ...fromMetrics };
       const step = (now) => {
         const progress = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - progress, 4);
-        this.displayedMetrics = TRACKED_METRICS.reduce((accumulator, key) => {
-          const fromValue = fromMetrics[key] ?? 0;
-          const toValue = toMetrics[key] ?? 0;
-          accumulator[key] = Math.round(fromValue + (toValue - fromValue) * eased);
-          return accumulator;
+        this.displayedMetrics = TRACKED_METRICS.reduce((acc, key) => {
+          const from = fromMetrics[key] ?? 0;
+          const to = toMetrics[key] ?? 0;
+          acc[key] = Math.round(from + (to - from) * eased);
+          return acc;
         }, {});
         if (progress < 1) {
           this.animationFrameId = requestAnimationFrame(step);
@@ -738,126 +949,203 @@ export default {
       };
       this.animationFrameId = requestAnimationFrame(step);
     },
+
     triggerScreenFlash(color) {
       this.flashOverlay = `radial-gradient(circle at center, ${color}, transparent 68%)`;
       this.flashActive = false;
       requestAnimationFrame(() => {
         this.flashActive = true;
-        window.setTimeout(() => {
-          this.flashActive = false;
-        }, 850);
+        window.setTimeout(() => { this.flashActive = false; }, 850);
       });
     },
+
     async shareResult(mode) {
       const text = this.buildShareText(mode);
       if (navigator.share) {
-        try {
-          await navigator.share({ title: "Build Naija", text });
-          return;
-        } catch (error) {
-          if (error && error.name === "AbortError") {
-            return;
-          }
-        }
+        try { await navigator.share({ title: "Build Naija", text }); return; }
+        catch (error) { if (error?.name === "AbortError") return; }
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
-        this.state.currentAlert = {
-          title: "Scorecard copied",
-          body: "Your Build Naija result is now in the clipboard, ready for Twitter or WhatsApp.",
-          summary: text,
-        };
+        this.state.currentAlert = { title: "Scorecard copied", body: "Your Build Naija result is now in the clipboard.", summary: text };
         return;
       }
       window.prompt("Copy your result", text);
     },
+
     buildShareText(mode) {
-      if (mode === "receivership") {
-        return `Build Naija: I drove ${this.activeCity.name} into federal receivership. Final score ${this.finalScore}/100. Budget ${clampMetric(this.state.metrics.budget)}, Trust ${clampMetric(this.state.metrics.trust)}.`;
-      }
-        return `Build Naija: I finished a ${TOTAL_ROUNDS}-year term in ${this.activeCity.name} with score ${this.finalScore}/100. Strongest systems: ${this.legacyStrongest.map(prettyMetricName).join(" and ")}. Weakest: ${this.legacyWeakest.map(prettyMetricName).join(" and ")}.`;
+      if (mode === "receivership") return `Build Naija: I drove ${this.activeCity.name} into federal receivership. Score ${this.finalScore}/100.`;
+      if (mode === "political-collapse") return `Build Naija: Political collapse in ${this.activeCity.name} after ${this.state.round - 1} years. Trust fell to ${clampMetric(this.state.metrics.trust)}/100.`;
+      if (mode === "breakdown") return `Build Naija: System breakdown in ${this.activeCity.name} after ${this.state.round - 1} years. Multiple critical failures.`;
+      const scenarioPart = this.state.scenario !== "standard" ? ` Scenario: ${this.state.scenario}.` : "";
+      return `Build Naija: ${TOTAL_ROUNDS}-year term in ${this.activeCity.name}. Score ${this.finalScore}/100.${scenarioPart} Strongest: ${this.legacyStrongest.map(prettyMetricName).join(" and ")}.`;
     },
+
+    // ─── PHASE 1: Advance round (apply effects, roll event) ───────────────────
     advanceRound() {
-      if (this.state.gameOver) {
-        return;
-      }
+      if (this.state.gameOver || this.state.awaitingEventChoice) return;
+
       const previousMetrics = { ...this.state.metrics };
       const roundDelta = createMetricDelta();
-      let alert = {
-        title: "Year review",
-        body: "Your planning package lands across the city.",
-        summary: "Momentum shifts, but not every system moves in the same direction.",
-      };
-      let flashColor = null;
+
+      // 1. Consume delayed effects queued from prior event choices
+      this.applyDelayedEffects(roundDelta);
+
+      // 2. Passive income from prior revenue initiatives
+      this.applyPassiveIncome(roundDelta);
+
+      // 3. Initiative effects (or penalty for inaction)
+      this.state.lastComboLabel = null;
       if (this.state.selectedInitiatives.length === 0) {
         this.applyEffectsToState({ trust: -3, economy: -2 }, [roundDelta]);
-        alert = {
-          title: "A quiet year costs momentum",
-          body: "Holding back preserves options, but people and businesses notice when the agenda slows.",
-          summary: "Trust -3, Economy -2.",
-        };
+      } else {
+        this.state.selectedInitiatives
+          .map((id) => this.initiativeLibrary[id])
+          .filter(Boolean)
+          .forEach((initiative) => {
+            this.applyEffectsToState(initiative.effects, [roundDelta]);
+            this.queuePassiveIncome(initiative.id);
+          });
+        // 4. Combo bonus
+        this.applyComboBonus(roundDelta);
       }
-      this.state.selectedInitiatives
-        .map((id) => this.initiativeLibrary[id])
-        .filter(Boolean)
-        .forEach((initiative) => {
-          this.applyEffectsToState(initiative.effects, [roundDelta]);
-        });
+
+      // 5. Passive drift (modified by scenario)
       this.applyPassiveDrift(roundDelta);
+
+      // 6. Scenario modifiers (election trust amplification, boom economy)
+      this.applyScenarioModifiers(roundDelta);
+
+      // 7. City-specific mechanic
+      this.applyCityMechanic(roundDelta);
+
+      // 8. Roll event
       const event = this.rollEvent();
+
+      if (event && event.choices && event.choices.length > 0) {
+        // Store state — player must choose before the round finalises
+        this.state.pendingEvent = event;
+        this.state.pendingRoundDelta = roundDelta;
+        this.state.pendingPreviousMetrics = previousMetrics;
+        this.state.awaitingEventChoice = true;
+      } else {
+        // No choices — apply event effects directly and finalise
+        if (event) {
+          this.applyConditionalEffects(event.conditionalEffects || [], [roundDelta]);
+          this.applyEffectsToState(event.effects || {}, [roundDelta]);
+          this.applyEventMitigations(event, roundDelta);
+        }
+        this.finalizeRound(event, null, roundDelta, previousMetrics);
+      }
+    },
+
+    // ─── PHASE 2: Player picks event response ─────────────────────────────────
+    resolveEventChoice(choiceId) {
+      if (!this.state.awaitingEventChoice || !this.state.pendingEvent) return;
+      const event = this.state.pendingEvent;
+      const choice = event.choices.find((c) => c.id === choiceId);
+      if (!choice) return;
+
+      const roundDelta = this.state.pendingRoundDelta;
+      const previousMetrics = this.state.pendingPreviousMetrics;
+
+      // Apply choice effects
+      const eventDelta = createMetricDelta();
+      this.applyEffectsToState(choice.effects || {}, [roundDelta, eventDelta]);
+
+      // Queue any delayed effects from this choice
+      if (choice.delayedEffects && Object.keys(choice.delayedEffects).length > 0) {
+        this.state.delayedEffectsQueue.push({
+          effects: choice.delayedEffects,
+          applyOnRound: this.state.round + 1,
+          label: choice.label,
+        });
+      }
+
+      // Apply mitigations (based on current metrics — rewards prior investment)
+      this.applyEventMitigations(event, roundDelta);
+
+      // Clear event state
+      this.state.awaitingEventChoice = false;
+      this.state.pendingEvent = null;
+      this.state.pendingRoundDelta = null;
+      this.state.pendingPreviousMetrics = null;
+
+      this.finalizeRound(event, choice, roundDelta, previousMetrics);
+    },
+
+    // ─── FINALISE: Clamp, collapse check, log, advance ────────────────────────
+    finalizeRound(event, choice, roundDelta, previousMetrics) {
+      this.normaliseMetrics();
+
+      // Build alert for display
+      let alert;
       if (event) {
-        const eventDelta = createMetricDelta();
-        this.applyConditionalEffects(event.conditionalEffects || [], [roundDelta, eventDelta]);
-        this.applyEffectsToState(event.effects || {}, [roundDelta, eventDelta]);
+        let summary = choice ? this.buildDeltaSummary(roundDelta) : this.buildDeltaSummary(roundDelta);
         alert = {
           title: event.title,
           body: event.body,
-          summary: this.buildDeltaSummary(eventDelta),
+          summary,
+          choiceLabel: choice?.label || null,
+          mitigations: this.state.lastMitigationsApplied || [],
         };
-        flashColor = EVENT_FLASHES[event.id] || null;
+      } else if (this.state.selectedInitiatives.length === 0) {
+        alert = { title: "A quiet year costs momentum", body: "Holding back preserves options, but people and businesses notice when the agenda slows.", summary: "Trust -3, Economy -2.", choiceLabel: null, mitigations: [] };
+      } else {
+        alert = { title: "Year review", body: "Your planning package lands across the city.", summary: "Momentum shifts, but not every system moves in the same direction.", choiceLabel: null, mitigations: [] };
       }
-      this.normaliseMetrics();
+
       this.state.lastRoundDelta = roundDelta;
       this.state.currentAlert = alert;
       this.state.currentVerdict = this.buildVerdict(roundDelta, this.state.metrics);
+
       this.updateCooldowns(this.state.selectedInitiatives);
+
       this.state.roundLog.push({
         round: this.state.round,
         initiatives: this.state.selectedInitiatives.map((id) => this.initiativeLibrary[id]?.title).filter(Boolean),
+        event: event ? { title: event.title, choice: choice?.label || null } : null,
+        comboLabel: this.state.lastComboLabel,
         alert,
         verdict: this.state.currentVerdict,
         delta: { ...roundDelta },
         metrics: { ...this.state.metrics },
       });
+
       this.state.selectedInitiatives = [];
-      if (this.state.metrics.budget <= 0) {
+
+      // Check collapse conditions
+      let flashColor = event ? (EVENT_FLASHES[event.id] || null) : null;
+      const collapse = this.checkCollapseConditions();
+
+      if (collapse) {
         this.state.gameOver = true;
-        this.state.endMode = "receivership";
-        this.state.currentAlert = {
-          title: "Federal receivership",
-          body: `${this.activeCity.name} has run out of money. The federal government has stepped in to manage the city's finances.`,
-          summary: "Debt has become the story. Control has slipped out of your hands.",
-        };
-        this.state.currentVerdict = "History records the collapse as a failure of restraint.";
-        flashColor = "rgba(95, 20, 20, 0.48)";
+        this.state.endMode = collapse.mode;
+        this.state.currentAlert = collapse.alert;
+        this.state.currentVerdict = collapse.verdict;
+        flashColor = collapse.flashColor;
       } else if (this.state.round >= TOTAL_ROUNDS) {
         this.state.gameOver = true;
         this.state.endMode = "legacy";
         this.state.currentAlert = {
           title: "Campaign complete",
           body: `You guided ${this.activeCity.name} through ${TOTAL_ROUNDS} years of trade-offs and pressure.`,
-          summary: `Final balance score ${this.finalScore}/100.`,
+          summary: `Final governance score ${this.finalScore}/100.`,
+          choiceLabel: null,
+          mitigations: [],
         };
         this.state.currentVerdict = this.buildLegacyVerdict(this.state.metrics);
       } else {
         this.state.round += 1;
+        // Update administration crisis status
+        this.state.administrationCrisis = this.state.metrics.trust < 20;
       }
-      if (flashColor) {
-        this.triggerScreenFlash(flashColor);
-      }
+
+      if (flashColor) this.triggerScreenFlash(flashColor);
       this.animateMetrics(previousMetrics, this.state.metrics);
     },
   },
+
   async mounted() {
     try {
       await this.initialize();
@@ -874,6 +1162,7 @@ export default {
       console.error(error);
     }
   },
+
   template: `
     <div>
       <main v-if="!hasStarted" class="relative min-h-screen overflow-hidden bg-shell text-cream">
@@ -890,7 +1179,7 @@ export default {
             </div>
             <div class="flex flex-wrap gap-3">
               <span class="rounded-full border border-[#49463f] bg-[#1f1d1a] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">All regions of Nigeria</span>
-              <span class="rounded-full border border-[#49463f] bg-[#1f1d1a] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">Data-driven cities and events</span>
+              <span class="rounded-full border border-[#49463f] bg-[#1f1d1a] px-4 py-2 text-sm font-semibold text-[#d8d1c5]">Events with player choices</span>
             </div>
           </header>
 
@@ -901,7 +1190,7 @@ export default {
                 Grow a city without breaking it.
               </h2>
               <p class="mt-6 max-w-3xl text-xl font-medium leading-10 text-[#d0c9bc]">
-                Pick a Nigerian city and work through four years of budget pressure, civic shocks, and hard public trade-offs.
+                Pick a Nigerian city and work through {{ totalRounds }} years of budget pressure, civic shocks, and hard public trade-offs.
               </p>
               <p class="mt-4 max-w-3xl text-2xl font-extrabold leading-tight text-[#f7f1e6] md:text-3xl">
                 Leave behind either a legacy front page or a federal takeover notice.
@@ -947,16 +1236,39 @@ export default {
                 <span v-for="resource in (activeCity ? activeCity.resources : [])" :key="resource" class="rounded-full border border-[#4b473f] bg-[#1e1c18] px-4 py-2 text-sm font-semibold text-[#e6ddcf]">{{ resource }}</span>
               </div>
               <div class="mt-8 grid grid-cols-2 gap-3">
-                <div
-                  v-for="metric in metricConfig.slice(0, 4)"
-                  :key="'landing-' + metric.key"
-                  class="rounded-[1.2rem] border border-[#302d28] bg-[#1b1a16] px-4 py-4"
-                >
+                <div v-for="metric in metricConfig.slice(0, 4)" :key="'landing-' + metric.key" class="rounded-[1.2rem] border border-[#302d28] bg-[#1b1a16] px-4 py-4">
                   <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#91897e]">{{ metric.label }}</p>
                   <p class="mt-2 text-3xl font-semibold text-[#f7f3eb]">{{ activeCity ? clampMetric(activeCity.metrics[metric.key]) : 0 }}</p>
                 </div>
               </div>
             </section>
+          </section>
+
+          <!-- Scenario selector -->
+          <section class="mt-10">
+            <div class="mb-4">
+              <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#9f988c]">Campaign scenario</p>
+              <p class="mt-2 text-xl font-semibold text-[#f4ede2]">Choose your starting conditions.</p>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <button
+                v-for="scenario in scenarios"
+                :key="scenario.id"
+                type="button"
+                class="rounded-[1.35rem] border px-5 py-5 text-left transition"
+                :class="selectedScenario === scenario.id
+                  ? 'border-[#6c9b12] bg-[#1e2b10]'
+                  : 'border-[#34312c] bg-[#171613]/90 hover:border-[#5d9813]'"
+                @click="selectedScenario = scenario.id"
+              >
+                <p class="text-xs font-extrabold uppercase tracking-[0.16em]"
+                   :class="selectedScenario === scenario.id ? 'text-[#9cca33]' : 'text-[#938c80]'">
+                  {{ selectedScenario === scenario.id ? '✓ Selected' : (scenario.id === 'standard' ? 'Default' : 'Challenge') }}
+                </p>
+                <p class="mt-2 text-lg font-semibold text-[#f3ede3]">{{ scenario.label }}</p>
+                <p class="mt-1 text-sm leading-6" :class="selectedScenario === scenario.id ? 'text-[#d6e8a8]' : 'text-[#a9a194]'">{{ scenario.description }}</p>
+              </button>
+            </div>
           </section>
 
           <section v-if="cityPickerOpen" class="mt-8 rounded-[2rem] border border-[#3a3833] bg-[#141310]/94 p-6">
@@ -1016,6 +1328,7 @@ export default {
                 <div class="mt-5 flex flex-wrap gap-2">
                   <span v-for="resource in city.resources.slice(0, 3)" :key="city.id + '-' + resource" class="rounded-full bg-[#1f1d19] px-3 py-1.5 text-sm font-semibold text-[#e6ddcf]">{{ resource }}</span>
                 </div>
+                <div v-if="getCityMeta(city.id) && $options.data && false" class="mt-3"></div>
                 <button
                   type="button"
                   class="mt-6 text-sm font-extrabold uppercase tracking-[0.18em] text-[#b8d56f] transition group-hover:text-[#d9ec9c]"
@@ -1030,346 +1343,451 @@ export default {
       </main>
 
       <div v-else-if="state" class="min-h-screen pb-[9.5rem] md:pb-[8.5rem]">
-      <div
-        class="pointer-events-none fixed inset-0 z-40 opacity-0"
-        :class="{ 'screen-flash': flashActive }"
-        :style="{ background: flashOverlay }"
-      ></div>
+        <div
+          class="pointer-events-none fixed inset-0 z-40 opacity-0"
+          :class="{ 'screen-flash': flashActive }"
+          :style="{ background: flashOverlay }"
+        ></div>
 
-      <header class="border-b border-line bg-[#32312d]">
-        <div class="mx-auto flex w-[min(1360px,calc(100vw-1.5rem))] flex-col gap-4 px-2 py-5 md:flex-row md:items-center md:justify-between">
-          <div class="flex items-center gap-4">
-            <h1 class="font-display text-4xl font-semibold tracking-[-0.02em] text-[#f7f3eb]">
-              Build <span class="text-green">Naija</span>
-            </h1>
-            <button
-              type="button"
-              class="hidden items-center gap-3 rounded-full border border-line bg-[#272622] px-4 py-2 text-left text-sm text-[#d3cec3] transition hover:border-[#7a776f] hover:bg-[#2d2c28] md:flex"
-              @click="cityPickerOpen = true"
-            >
-              <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
-              <span class="font-semibold text-[#f3ede3]">{{ activeCity.name }} · {{ activeMeta.state }}</span>
-            </button>
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="flex items-center gap-2 rounded-full border border-line bg-[#272622] px-4 py-2 text-sm text-[#d3cec3] md:hidden"
-              @click="cityPickerOpen = true"
-            >
-              <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
-              <span class="font-semibold text-[#f3ede3]">{{ activeCity.name }}</span>
-            </button>
-            <button
-              type="button"
-              class="rounded-full border border-line bg-[#272622] px-4 py-2 text-sm font-semibold text-[#d7d1c6] transition hover:border-[#7a776f] hover:bg-[#2d2c28]"
-              @click="historyVisible = !historyVisible"
-            >
-              History
-            </button>
-            <div class="rounded-full border border-line bg-[#272622] px-6 py-2 text-[0.95rem] font-semibold leading-tight text-[#d7d1c6]">
-              {{ roundLabel }}
+        <header class="border-b border-line bg-[#32312d]">
+          <div class="mx-auto flex w-[min(1360px,calc(100vw-1.5rem))] flex-col gap-4 px-2 py-5 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-4">
+              <h1 class="font-display text-4xl font-semibold tracking-[-0.02em] text-[#f7f3eb]">
+                Build <span class="text-green">Naija</span>
+              </h1>
+              <button
+                type="button"
+                class="hidden items-center gap-3 rounded-full border border-line bg-[#272622] px-4 py-2 text-left text-sm text-[#d3cec3] transition hover:border-[#7a776f] hover:bg-[#2d2c28] md:flex"
+                @click="cityPickerOpen = true"
+              >
+                <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
+                <span class="font-semibold text-[#f3ede3]">{{ activeCity.name }} · {{ activeMeta.state }}</span>
+              </button>
             </div>
-          </div>
-        </div>
-      </header>
-
-      <section v-if="cityPickerOpen" class="relative z-20 border-b border-line bg-[#1f1e1b]">
-        <div class="mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-5">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a29d94]">Choose City</p>
-              <p class="mt-1 text-lg font-semibold text-[#f3ede3]">Browse by geopolitical zone, not a flat list.</p>
-            </div>
-            <button type="button" class="rounded-full border border-line px-4 py-2 text-sm font-semibold text-[#d7d1c6]" @click="cityPickerOpen = false">Close</button>
-          </div>
-          <div class="grid gap-4 lg:grid-cols-3">
-            <section
-              v-for="group in groupedCities"
-              :key="group.region"
-              class="rounded-[1.35rem] border border-[#403d39] bg-[#252420] p-4"
-            >
-              <p class="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">{{ group.region }}</p>
-              <div class="grid gap-3">
-                <button
-                  v-for="city in group.cities"
-                  :key="city.id"
-                  type="button"
-                  class="flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition"
-                  :class="cityCardClasses(city.id)"
-                  @click="handleCityChange(city.id)"
-                >
-                  <span>
-                    <span class="block text-base font-semibold">{{ city.name }}</span>
-                    <span class="mt-1 block text-xs uppercase tracking-[0.14em]" :class="cityStateClasses(city.id)">{{ getCityMeta(city.id).state }}</span>
-                  </span>
-                  <span class="text-xs font-bold" :class="cityStateClasses(city.id)">{{ calculateScore(city.metrics) }}/100</span>
-                </button>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                class="flex items-center gap-2 rounded-full border border-line bg-[#272622] px-4 py-2 text-sm text-[#d3cec3] md:hidden"
+                @click="cityPickerOpen = true"
+              >
+                <span class="text-xs uppercase tracking-[0.18em] text-[#a29d94]">City</span>
+                <span class="font-semibold text-[#f3ede3]">{{ activeCity.name }}</span>
+              </button>
+              <button
+                type="button"
+                class="rounded-full border border-line bg-[#272622] px-4 py-2 text-sm font-semibold text-[#d7d1c6] transition hover:border-[#7a776f] hover:bg-[#2d2c28]"
+                @click="historyVisible = !historyVisible"
+              >
+                History
+              </button>
+              <div class="rounded-full border border-line bg-[#272622] px-4 py-2 text-[0.95rem] font-semibold leading-tight text-[#d7d1c6]">
+                {{ roundLabel }}
               </div>
-            </section>
-          </div>
-        </div>
-      </section>
-
-      <main class="relative z-10 mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-7 pb-14 md:pb-20">
-        <section class="mb-8">
-          <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div class="max-w-3xl">
-              <p class="mb-3 text-sm uppercase tracking-[0.2em] text-[#8d877c]">{{ activeMeta.state }} · {{ activeMeta.region }} · {{ activeCity.resources.join(' · ') }}</p>
-              <h2 class="font-display text-6xl font-semibold leading-none text-[#f7f3eb] md:text-7xl">{{ activeCity.name }}</h2>
-              <p class="mt-4 max-w-2xl text-xl font-semibold leading-[1.45] text-[#d6d0c5]">{{ activeCity.summary }}</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="rounded-full px-8 py-3 text-xl font-semibold" :style="{ backgroundColor: currentTheme.soft, color: currentTheme.accent }">
-                ₦{{ clampMetric(state.metrics.budget) }}B budget
+              <!-- Live governance score -->
+              <div class="rounded-full border border-[#4a5c2a] bg-[#1e2b10] px-4 py-2 text-[0.95rem] font-semibold leading-tight" :style="{ color: currentTheme.accent }">
+                Score {{ currentScore }}/100
               </div>
             </div>
           </div>
-        </section>
+        </header>
 
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <article
-            v-for="metric in renderedMetrics"
-            :key="metric.key"
-            class="rounded-[1.35rem] bg-card px-6 py-5"
-            :class="metricCardClasses(metric)"
-          >
-            <p class="text-[1.05rem] font-semibold uppercase tracking-[0.05em] text-[#cfc8bc]">{{ metric.label }}</p>
-            <p class="mt-1 text-5xl font-semibold leading-none text-[#f7f3eb]">{{ metric.value }}</p>
-            <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-[#4e4b46]">
-              <div class="h-full" :class="metric.barClass" :style="{ width: metricBarWidth(metric.value) }"></div>
-            </div>
-            <p class="mt-4 text-[0.95rem] font-semibold" :class="metric.deltaClass">{{ metric.deltaPrefix }}{{ metric.delta }} this year</p>
-            <p v-if="metric.isDanger" class="mt-3 text-[0.82rem] font-bold uppercase tracking-[0.14em] text-[#ff8a7b]">Critical pressure</p>
-          </article>
-        </section>
-
-        <section
-          class="banner-pop mt-8 rounded-3xl border px-8 py-6"
-          :style="{ backgroundColor: currentTheme.eventBg, borderColor: currentTheme.eventBorder, color: currentTheme.eventText }"
-        >
-          <div class="flex gap-4">
-            <div class="pt-1 text-4xl text-[#e29a00]">⚡</div>
-            <div>
-              <p class="text-[0.82rem] font-extrabold uppercase tracking-[0.18em] opacity-70">City event</p>
-              <h3 class="mt-1 text-3xl font-extrabold leading-tight">{{ state.currentAlert.title }}</h3>
-              <p class="mt-3 text-[1.08rem] font-medium leading-8">{{ state.currentAlert.body }}</p>
-              <p class="mt-2 text-[1.08rem] font-semibold leading-8">{{ state.currentAlert.summary }}</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="mt-5">
-          <p class="text-sm uppercase tracking-[0.22em] text-[#958f84]">Year verdict</p>
-          <p class="mt-2 text-2xl font-semibold leading-tight text-[#f0eadf]">{{ state.currentVerdict }}</p>
-        </section>
-
-        <section v-if="historyVisible && recentHistory.length > 0" class="mt-8 rounded-[1.6rem] border border-[#3e3c37] bg-[#1e1d1a] px-6 py-5">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#989286]">Year history</p>
-              <p class="mt-1 text-lg font-semibold text-[#f3ede3]">A scannable record of what you did and what happened.</p>
-            </div>
-            <button type="button" class="rounded-full border border-[#55524d] px-4 py-2 text-sm font-semibold text-[#d8d1c5]" @click="historyVisible = false">Hide</button>
-          </div>
-          <div class="grid gap-3 lg:grid-cols-2">
-            <article v-for="entry in recentHistory" :key="entry.round" class="rounded-[1.2rem] border border-[#403d39] bg-[#252420] p-4">
-              <div class="flex items-center justify-between gap-3">
-                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">Year {{ entry.round }}</p>
-                <p class="text-xs font-semibold text-[#b7b0a4]">{{ entry.initiatives.length }} initiative{{ entry.initiatives.length === 1 ? '' : 's' }}</p>
-              </div>
-              <p class="mt-2 text-lg font-semibold text-[#f3ede3]">{{ entry.alert.title }}</p>
-              <p class="mt-2 text-sm leading-7 text-[#cbc4b8]">{{ entry.verdict }}</p>
-              <p class="mt-3 text-xs uppercase tracking-[0.14em] text-[#8f887d]">{{ entry.initiatives.length > 0 ? entry.initiatives.join(' · ') : 'No initiatives selected' }}</p>
-            </article>
-          </div>
-        </section>
-
-        <section v-if="!state.gameOver" class="mt-8">
-          <div class="mb-5 border-b border-[#d7d1c6] pb-4">
-            <p class="text-2xl font-extrabold uppercase tracking-[0.08em] text-[#ddd6ca]">
-              Choose Your Initiatives <span class="text-[#b4aea2]">- Pick Up To 2</span>
-            </p>
-          </div>
-          <div class="grid gap-4 xl:grid-cols-2">
-            <article
-              v-for="initiative in visibleInitiatives"
-              :key="initiative.id"
-              class="flex min-h-[212px] flex-col justify-between rounded-[1.35rem] border px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-              :class="initiativeCardClasses(initiative)"
-            >
+        <section v-if="cityPickerOpen" class="relative z-20 border-b border-line bg-[#1f1e1b]">
+          <div class="mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-5">
+            <div class="mb-4 flex items-center justify-between gap-4">
               <div>
-                <div class="mb-3 flex items-start justify-between gap-4">
-                  <div>
-                    <h3 class="text-[2rem] font-semibold leading-tight text-[#f7f3eb]">{{ initiative.title }}</h3>
-                  </div>
+                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a29d94]">Choose City</p>
+                <p class="mt-1 text-lg font-semibold text-[#f3ede3]">Browse by geopolitical zone.</p>
+              </div>
+              <button type="button" class="rounded-full border border-line px-4 py-2 text-sm font-semibold text-[#d7d1c6]" @click="cityPickerOpen = false">Close</button>
+            </div>
+            <div class="grid gap-4 lg:grid-cols-3">
+              <section v-for="group in groupedCities" :key="group.region" class="rounded-[1.35rem] border border-[#403d39] bg-[#252420] p-4">
+                <p class="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">{{ group.region }}</p>
+                <div class="grid gap-3">
                   <button
+                    v-for="city in group.cities"
+                    :key="city.id"
                     type="button"
-                    class="rounded-full border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5"
-                    :class="initiativeToggleClasses(initiative)"
-                    :disabled="initiative.isLocked"
-                    @click="toggleInitiative(initiative.id)"
+                    class="flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition"
+                    :class="cityCardClasses(city.id)"
+                    @click="handleCityChange(city.id)"
                   >
-                    {{ initiative.isLocked ? 'Locked ' + initiative.cooldown : initiative.isSelected ? 'Selected' : 'Select' }}
+                    <span>
+                      <span class="block text-base font-semibold">{{ city.name }}</span>
+                      <span class="mt-1 block text-xs uppercase tracking-[0.14em]" :class="cityStateClasses(city.id)">{{ getCityMeta(city.id).state }}</span>
+                    </span>
+                    <span class="text-xs font-bold" :class="cityStateClasses(city.id)">{{ calculateScore(city.metrics) }}/100</span>
                   </button>
                 </div>
-                <p class="max-w-3xl text-[1.05rem] font-medium leading-9 text-[#c8c2b6]">{{ initiative.description }}</p>
-                <div class="mt-4">
-                  <p class="text-[0.76rem] font-extrabold uppercase tracking-[0.16em] text-[#a9a296]">Projected if chosen</p>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <span
-                      v-for="metric in initiative.preview.metrics"
-                      :key="initiative.id + '-' + metric.key"
-                      class="rounded-full px-3 py-1.5 text-[0.92rem] font-semibold"
-                      :class="previewBadgeClasses(metric.delta)"
-                    >
-                      {{ metric.label }} {{ metric.from }}→{{ metric.to }}
-                    </span>
-                  </div>
-                  <p v-if="initiative.isLocked" class="mt-3 text-sm font-semibold text-[#d39e97]">Cooldown active. Available in {{ initiative.cooldown }} {{ initiative.cooldown === 1 ? 'year' : 'years' }}.</p>
-                  <p v-else-if="initiative.preview.budgetWarning" class="mt-3 text-sm font-semibold text-[#ffb372]">{{ initiative.preview.budgetWarning }}</p>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <main class="relative z-10 mx-auto w-[min(1360px,calc(100vw-1.5rem))] px-2 py-7 pb-14 md:pb-20">
+          <section class="mb-8">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div class="max-w-3xl">
+                <p class="mb-3 text-sm uppercase tracking-[0.2em] text-[#8d877c]">{{ activeMeta.state }} · {{ activeMeta.region }} · {{ activeCity.resources.join(' · ') }}</p>
+                <h2 class="font-display text-6xl font-semibold leading-none text-[#f7f3eb] md:text-7xl">{{ activeCity.name }}</h2>
+                <p class="mt-4 max-w-2xl text-xl font-semibold leading-[1.45] text-[#d6d0c5]">{{ activeCity.summary }}</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="rounded-full px-8 py-3 text-xl font-semibold" :style="{ backgroundColor: currentTheme.soft, color: currentTheme.accent }">
+                  ₦{{ clampMetric(state.metrics.budget) }}B budget
                 </div>
               </div>
-              <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-                <span class="rounded-full bg-[#f1dfd8] px-4 py-2 text-[0.95rem] font-bold text-[#a84b22]">₦{{ initiative.cost }}B</span>
-                <div class="flex flex-wrap items-center gap-2">
-                  <span v-for="badge in initiative.positiveBadges" :key="initiative.id + '-pos-' + badge" class="rounded-full bg-[#e4efcf] px-3 py-1.5 text-[0.95rem] font-semibold text-[#447313]">{{ badge }}</span>
-                  <span v-for="badge in initiative.negativeBadges" :key="initiative.id + '-neg-' + badge" class="rounded-full bg-[#f3dddd] px-3 py-1.5 text-[0.95rem] font-semibold text-[#b3362d]">{{ badge }}</span>
+            </div>
+          </section>
+
+          <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <article
+              v-for="metric in renderedMetrics"
+              :key="metric.key"
+              class="rounded-[1.35rem] bg-card px-6 py-5"
+              :class="metricCardClasses(metric)"
+            >
+              <p class="text-[1.05rem] font-semibold uppercase tracking-[0.05em] text-[#cfc8bc]">{{ metric.label }}</p>
+              <p class="mt-1 text-5xl font-semibold leading-none text-[#f7f3eb]">{{ metric.value }}</p>
+              <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-[#4e4b46]">
+                <div class="h-full" :class="metric.barClass" :style="{ width: metricBarWidth(metric.value) }"></div>
+              </div>
+              <p class="mt-4 text-[0.95rem] font-semibold" :class="metric.deltaClass">{{ metric.deltaPrefix }}{{ metric.delta }} this year</p>
+              <p v-if="metric.isDanger" class="mt-3 text-[0.82rem] font-bold uppercase tracking-[0.14em] text-[#ff8a7b]">Critical pressure</p>
+            </article>
+          </section>
+
+          <!-- City mechanic callout -->
+          <section v-if="cityMechanic" class="mt-5 rounded-2xl border border-[#3e3c37] bg-[#1a1917] px-5 py-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#938c80]">City mechanic · {{ cityMechanic.label }}</p>
+                <p class="mt-1 text-base text-[#c8c2b6]">{{ cityMechanic.description }}</p>
+              </div>
+              <span v-if="state.lastCityMechanicEffect" class="shrink-0 rounded-full bg-[#2a2925] px-3 py-1 text-xs font-semibold text-[#b8b0a2]">Active</span>
+            </div>
+            <p v-if="state.lastCityMechanicEffect" class="mt-2 text-sm font-semibold text-[#ffb372]">{{ state.lastCityMechanicEffect }}</p>
+          </section>
+
+          <!-- Event choice panel (blocks round until resolved) -->
+          <section
+            v-if="state.awaitingEventChoice && state.pendingEvent"
+            class="banner-pop mt-8 rounded-3xl border px-8 py-6"
+            :style="{ backgroundColor: currentTheme.eventBg, borderColor: currentTheme.eventBorder, color: currentTheme.eventText }"
+          >
+            <div class="mb-5">
+              <p class="text-[0.82rem] font-extrabold uppercase tracking-[0.18em] opacity-70">City event · response required</p>
+              <h3 class="mt-1 text-3xl font-extrabold leading-tight">{{ state.pendingEvent.title }}</h3>
+              <p class="mt-3 text-[1.08rem] font-medium leading-8">{{ state.pendingEvent.body }}</p>
+              <!-- Active mitigations preview -->
+              <div v-if="activeMitigations.length > 0" class="mt-3 space-y-1">
+                <p v-for="mit in activeMitigations" :key="mit.label" class="text-sm font-bold opacity-80">✦ {{ mit.label }}</p>
+              </div>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <button
+                v-for="choice in state.pendingEvent.choices"
+                :key="choice.id"
+                type="button"
+                class="rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5"
+                :style="{ borderColor: currentTheme.eventBorder + 'cc', backgroundColor: currentTheme.eventBg + 'dd' }"
+                @click="resolveEventChoice(choice.id)"
+              >
+                <p class="text-[0.75rem] font-extrabold uppercase tracking-[0.16em] opacity-60">{{ choice.tag }}</p>
+                <p class="mt-1 text-base font-bold leading-tight">{{ choice.label }}</p>
+                <div v-if="choice.effects" class="mt-2 flex flex-wrap gap-1">
+                  <span
+                    v-for="(val, key) in choice.effects"
+                    :key="key"
+                    class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                    :style="val > 0 ? 'background:rgba(93,152,19,0.18);color:#7ec520' : 'background:rgba(212,59,48,0.18);color:#e86b60'"
+                  >{{ val > 0 ? '+' : '' }}{{ prettyMetricName(key) }} {{ val }}</span>
+                </div>
+                <div v-if="choice.delayedEffects" class="mt-2">
+                  <p class="text-xs font-semibold opacity-60">Next year: {{ formatEffects(choice.delayedEffects) }}</p>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <!-- Normal alert (shown after round resolves) -->
+          <section
+            v-else
+            class="banner-pop mt-8 rounded-3xl border px-8 py-6"
+            :style="{ backgroundColor: currentTheme.eventBg, borderColor: currentTheme.eventBorder, color: currentTheme.eventText }"
+          >
+            <div class="flex gap-4">
+              <div class="pt-1 text-4xl text-[#e29a00]">⚡</div>
+              <div>
+                <p class="text-[0.82rem] font-extrabold uppercase tracking-[0.18em] opacity-70">City event</p>
+                <h3 class="mt-1 text-3xl font-extrabold leading-tight">{{ state.currentAlert.title }}</h3>
+                <p class="mt-3 text-[1.08rem] font-medium leading-8">{{ state.currentAlert.body }}</p>
+                <p class="mt-2 text-[1.08rem] font-semibold leading-8">{{ state.currentAlert.summary }}</p>
+                <p v-if="state.currentAlert.choiceLabel" class="mt-2 text-sm font-extrabold uppercase tracking-[0.14em] opacity-60">You chose: {{ state.currentAlert.choiceLabel }}</p>
+                <div v-if="state.currentAlert.mitigations && state.currentAlert.mitigations.length > 0" class="mt-3 space-y-1">
+                  <p v-for="mit in state.currentAlert.mitigations" :key="mit" class="text-sm font-bold opacity-70">✦ {{ mit }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="mt-5">
+            <p class="text-sm uppercase tracking-[0.22em] text-[#958f84]">Year verdict</p>
+            <p class="mt-2 text-2xl font-semibold leading-tight text-[#f0eadf]">{{ state.currentVerdict }}</p>
+          </section>
+
+          <!-- Delayed effects queued display -->
+          <section v-if="state.delayedEffectsQueue.length > 0" class="mt-4 rounded-2xl border border-[#4a5e22] bg-[#1e2b10] px-5 py-4">
+            <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9cca33]">Arriving next year</p>
+            <ul class="mt-1 space-y-1">
+              <li v-for="entry in state.delayedEffectsQueue" :key="entry.label" class="text-sm font-semibold text-[#c8e08a]">
+                From "{{ entry.label }}": {{ formatEffects(entry.effects) }}
+              </li>
+            </ul>
+          </section>
+
+          <!-- Passive income display -->
+          <section v-if="state.lastPassiveIncome" class="mt-3 rounded-2xl border border-[#4a5e22] bg-[#1e2b10] px-5 py-3">
+            <p class="text-sm font-semibold text-[#9cca33]">Revenue stream: {{ state.lastPassiveIncome }}</p>
+          </section>
+
+          <!-- Administration crisis warning -->
+          <section v-if="state.administrationCrisis && !state.gameOver" class="mt-5 rounded-2xl border border-[#8f2b24] bg-[#220d0d] px-5 py-4">
+            <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#db8e86]">Administration crisis</p>
+            <p class="mt-1 text-base font-semibold text-[#f0cbc5]">Public trust has collapsed below 20. You can only push one initiative this year. Recover trust before it falls further.</p>
+          </section>
+
+          <section v-if="historyVisible && recentHistory.length > 0" class="mt-8 rounded-[1.6rem] border border-[#3e3c37] bg-[#1e1d1a] px-6 py-5">
+            <div class="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#989286]">Year history</p>
+                <p class="mt-1 text-lg font-semibold text-[#f3ede3]">A scannable record of what you did and what happened.</p>
+              </div>
+              <button type="button" class="rounded-full border border-[#55524d] px-4 py-2 text-sm font-semibold text-[#d8d1c5]" @click="historyVisible = false">Hide</button>
+            </div>
+            <div class="grid gap-3 lg:grid-cols-2">
+              <article v-for="entry in recentHistory" :key="entry.round" class="rounded-[1.2rem] border border-[#403d39] bg-[#252420] p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9b9488]">Year {{ entry.round }}</p>
+                  <p class="text-xs font-semibold text-[#b7b0a4]">{{ entry.initiatives.length }} initiative{{ entry.initiatives.length === 1 ? '' : 's' }}</p>
+                </div>
+                <p class="mt-2 text-lg font-semibold text-[#f3ede3]">{{ entry.alert.title }}</p>
+                <p v-if="entry.event && entry.event.choice" class="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#9b9488]">Chose: {{ entry.event.choice }}</p>
+                <p v-if="entry.comboLabel" class="mt-1 text-xs font-semibold text-[#9cca33]">Synergy: {{ entry.comboLabel }}</p>
+                <p class="mt-2 text-sm leading-7 text-[#cbc4b8]">{{ entry.verdict }}</p>
+                <p class="mt-3 text-xs uppercase tracking-[0.14em] text-[#8f887d]">{{ entry.initiatives.length > 0 ? entry.initiatives.join(' · ') : 'No initiatives selected' }}</p>
+              </article>
+            </div>
+          </section>
+
+          <section v-if="!state.gameOver" class="mt-8">
+            <div class="mb-5 border-b border-[#d7d1c6] pb-4 flex items-center justify-between gap-4">
+              <p class="text-2xl font-extrabold uppercase tracking-[0.08em] text-[#ddd6ca]">
+                Choose Your Initiatives
+                <span class="text-[#b4aea2]"> — Pick Up To {{ maxInitiativeSlots }}</span>
+              </p>
+              <p v-if="state.scenario !== 'standard'" class="text-xs font-extrabold uppercase tracking-[0.16em] text-[#9cca33]">
+                {{ scenarios.find(s => s.id === state.scenario) ? scenarios.find(s => s.id === state.scenario).label : '' }}
+              </p>
+            </div>
+
+            <!-- Combo bonus preview -->
+            <div v-if="activeCombo" class="mb-5 rounded-2xl border border-[#5d9813]/40 bg-[#5d9813]/10 px-5 py-4">
+              <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#9cca33]">Synergy · {{ activeCombo.label }}</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span
+                  v-for="(val, key) in activeCombo.bonus"
+                  :key="key"
+                  class="rounded-full bg-[#5d9813]/20 px-3 py-1 text-sm font-semibold text-[#9cca33]"
+                >{{ prettyMetricName(key) }} {{ val > 0 ? '+' : '' }}{{ val }}</span>
+              </div>
+            </div>
+
+            <div class="grid gap-4 xl:grid-cols-2">
+              <article
+                v-for="initiative in visibleInitiatives"
+                :key="initiative.id"
+                class="flex min-h-[212px] flex-col justify-between rounded-[1.35rem] border px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                :class="initiativeCardClasses(initiative)"
+              >
+                <div>
+                  <div class="mb-3 flex items-start justify-between gap-4">
+                    <h3 class="text-[2rem] font-semibold leading-tight text-[#f7f3eb]">{{ initiative.title }}</h3>
+                    <button
+                      type="button"
+                      class="rounded-full border px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5"
+                      :class="initiativeToggleClasses(initiative)"
+                      :disabled="initiative.isLocked || state.awaitingEventChoice"
+                      @click="toggleInitiative(initiative.id)"
+                    >
+                      {{ initiative.isLocked ? 'Locked ' + initiative.cooldown : initiative.isSelected ? 'Selected' : 'Select' }}
+                    </button>
+                  </div>
+                  <p class="max-w-3xl text-[1.05rem] font-medium leading-9 text-[#c8c2b6]">{{ initiative.description }}</p>
+                  <div class="mt-4">
+                    <p class="text-[0.76rem] font-extrabold uppercase tracking-[0.16em] text-[#a9a296]">Projected if chosen</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <span
+                        v-for="metric in initiative.preview.metrics"
+                        :key="initiative.id + '-' + metric.key"
+                        class="rounded-full px-3 py-1.5 text-[0.92rem] font-semibold"
+                        :class="previewBadgeClasses(metric.delta)"
+                      >{{ metric.label }} {{ metric.from }}→{{ metric.to }}</span>
+                    </div>
+                    <p v-if="initiative.isLocked" class="mt-3 text-sm font-semibold text-[#d39e97]">Cooldown active. Available in {{ initiative.cooldown }} {{ initiative.cooldown === 1 ? 'year' : 'years' }}.</p>
+                    <p v-else-if="initiative.preview.budgetWarning" class="mt-3 text-sm font-semibold text-[#ffb372]">{{ initiative.preview.budgetWarning }}</p>
+                  </div>
+                </div>
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+                  <span class="rounded-full bg-[#f1dfd8] px-4 py-2 text-[0.95rem] font-bold text-[#a84b22]">₦{{ initiative.cost }}B</span>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span v-for="badge in initiative.positiveBadges" :key="initiative.id + '-pos-' + badge" class="rounded-full bg-[#e4efcf] px-3 py-1.5 text-[0.95rem] font-semibold text-[#447313]">{{ badge }}</span>
+                    <span v-for="badge in initiative.negativeBadges" :key="initiative.id + '-neg-' + badge" class="rounded-full bg-[#f3dddd] px-3 py-1.5 text-[0.95rem] font-semibold text-[#b3362d]">{{ badge }}</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Game over screens -->
+          <section v-if="state.gameOver" class="mt-10">
+
+            <!-- Failure screens (receivership / political-collapse / breakdown) -->
+            <article
+              v-if="state.endMode === 'receivership' || state.endMode === 'political-collapse' || state.endMode === 'breakdown'"
+              class="overflow-hidden rounded-[2rem] border border-[#6a2623] bg-[linear-gradient(180deg,#220d0d,#120909)] text-[#f6e9e3] shadow-[0_28px_80px_rgba(0,0,0,0.45)]"
+            >
+              <div class="border-b border-[#5b2623] bg-[#2b1111] px-8 py-6 md:px-10">
+                <p class="text-xs font-extrabold uppercase tracking-[0.28em] text-[#db8e86]">
+                  {{ state.endMode === 'receivership' ? 'Federal emergency notice' : state.endMode === 'political-collapse' ? 'Political collapse' : 'System breakdown' }}
+                </p>
+                <h3 class="mt-3 font-display text-6xl font-semibold leading-none md:text-7xl">{{ state.currentAlert.title }}</h3>
+                <p class="mt-4 max-w-4xl text-xl font-semibold leading-9 text-[#f0cbc5]">{{ state.currentAlert.body }}</p>
+                <button type="button" class="mt-5 rounded-full border border-[#7c3733] bg-[#341716] px-4 py-2 text-sm font-bold text-[#f2d6d2] transition hover:bg-[#41201f]" @click="shareResult(state.endMode)">Share result</button>
+              </div>
+              <div class="grid gap-8 px-8 py-8 md:px-10 lg:grid-cols-[1.15fr_0.85fr]">
+                <div>
+                  <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Official finding</p>
+                    <p class="mt-4 text-2xl font-semibold leading-10 text-[#f7e8e2]">{{ state.currentVerdict }}</p>
+                    <p class="mt-4 text-lg leading-8 text-[#d8b6b0]">{{ activeCity.name }}, {{ activeMeta.state }} will be remembered for collapsing under the weight of {{ legacyWeakest.map(prettyMetricName).join(' and ') }} before its growth story could hold.</p>
+                  </div>
+                  <div class="mt-6 rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">What triggered the collapse</p>
+                    <ul class="mt-4 space-y-3 text-lg leading-8 text-[#f0cbc5]">
+                      <li>• {{ state.currentAlert.summary }}</li>
+                      <li>• Public trust closed at {{ clampMetric(state.metrics.trust) }}, weakening political legitimacy.</li>
+                      <li>• The city ended with acute stress in {{ legacyWeakest.map(prettyMetricName).join(' and ') }}.</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Final distress ledger</p>
+                    <div class="mt-4 space-y-3">
+                      <div v-for="metric in renderedMetrics" :key="'end-' + metric.key" class="flex items-center justify-between border-b border-[#3a1b1a] pb-2 text-lg last:border-b-0">
+                        <span>{{ metric.label }}</span>
+                        <strong>{{ clampMetric(state.metrics[metric.key]) }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Last years before collapse</p>
+                    <div class="mt-4 space-y-4">
+                      <div v-for="entry in recentHistory.slice(0, 3)" :key="'collapse-' + entry.round" class="border-l-2 border-[#8a3330] pl-4">
+                        <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#d6897f]">Year {{ entry.round }}</p>
+                        <p class="mt-1 text-lg font-semibold text-[#f7e8e2]">{{ entry.alert.title }}</p>
+                        <p class="mt-1 text-sm leading-7 text-[#d8b6b0]">{{ entry.verdict }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </article>
-          </div>
-        </section>
 
-        <section v-if="state.gameOver" class="mt-10">
-          <article v-if="state.endMode === 'receivership'" class="overflow-hidden rounded-[2rem] border border-[#6a2623] bg-[linear-gradient(180deg,#220d0d,#120909)] text-[#f6e9e3] shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
-            <div class="border-b border-[#5b2623] bg-[#2b1111] px-8 py-6 md:px-10">
-              <p class="text-xs font-extrabold uppercase tracking-[0.28em] text-[#db8e86]">Federal emergency notice</p>
-              <h3 class="mt-3 font-display text-6xl font-semibold leading-none md:text-7xl">Receivership In {{ activeCity.name }}</h3>
-              <p class="mt-4 max-w-4xl text-xl font-semibold leading-9 text-[#f0cbc5]">The city treasury has failed. Abuja has suspended local financial control and moved in to stabilize essential services.</p>
-              <button type="button" class="mt-5 rounded-full border border-[#7c3733] bg-[#341716] px-4 py-2 text-sm font-bold text-[#f2d6d2] transition hover:bg-[#41201f]" @click="shareResult('receivership')">Share result</button>
-            </div>
-            <div class="grid gap-8 px-8 py-8 md:px-10 lg:grid-cols-[1.15fr_0.85fr]">
-              <div>
-                <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Official finding</p>
-                  <p class="mt-4 text-2xl font-semibold leading-10 text-[#f7e8e2]">{{ state.currentVerdict }}</p>
-                  <p class="mt-4 text-lg leading-8 text-[#d8b6b0]">{{ activeCity.name }}, {{ activeMeta.state }} will be remembered for collapsing under the weight of {{ legacyWeakest.map(prettyMetricName).join(' and ') }} before its growth story could hold.</p>
-                </div>
-                <div class="mt-6 rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">What triggered the takeover</p>
-                  <ul class="mt-4 space-y-3 text-lg leading-8 text-[#f0cbc5]">
-                    <li>• Budget fell to {{ clampMetric(state.metrics.budget) }}, leaving almost no room to govern.</li>
-                    <li>• Public trust closed at {{ clampMetric(state.metrics.trust) }}, weakening political legitimacy.</li>
-                    <li>• The city ended with acute stress in {{ legacyWeakest.map(prettyMetricName).join(' and ') }}.</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="space-y-4">
-                <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Final distress ledger</p>
-                  <div class="mt-4 space-y-3">
-                    <div v-for="metric in renderedMetrics" :key="'end-' + metric.key" class="flex items-center justify-between border-b border-[#3a1b1a] pb-2 text-lg last:border-b-0">
-                      <span>{{ metric.label }}</span>
-                      <strong>{{ clampMetric(state.metrics[metric.key]) }}</strong>
-                    </div>
+            <!-- Legacy / success screen -->
+            <article v-else class="overflow-hidden rounded-[2rem] border border-[#d1c3aa] bg-[#f3ead7] text-[#30261a] shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
+              <div class="border-b border-[#cfb98f] bg-[#efe2c8] px-8 py-6 md:px-10">
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.28em] text-[#7f5f2b]">The Build Naija Times</p>
+                    <h3 class="mt-2 font-display text-6xl font-semibold leading-none md:text-7xl">{{ endHeadline }}</h3>
+                    <p class="mt-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#7b6a53]">{{ activeCity.name }}, {{ activeMeta.state }} · Final edition · {{ startYear + totalRounds - 1 }}</p>
                   </div>
-                </div>
-                <div class="rounded-[1.5rem] border border-[#5d2522] bg-[#1a0d0d] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#d6897f]">Last years before collapse</p>
-                  <div class="mt-4 space-y-4">
-                    <div v-for="entry in recentHistory.slice(0, 3)" :key="'collapse-' + entry.round" class="border-l-2 border-[#8a3330] pl-4">
-                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#d6897f]">Year {{ entry.round }}</p>
-                      <p class="mt-1 text-lg font-semibold text-[#f7e8e2]">{{ entry.alert.title }}</p>
-                      <p class="mt-1 text-sm leading-7 text-[#d8b6b0]">{{ entry.verdict }}</p>
-                    </div>
+                  <div class="rounded-[1.4rem] border border-[#cfb98f] bg-[#fbf4e7] px-6 py-4 text-right">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#7f5f2b]">Civic grade</p>
+                    <p class="mt-1 font-display text-6xl leading-none">{{ endGrade }}</p>
+                    <p class="mt-2 text-lg font-semibold">Score {{ finalScore }}/100</p>
+                    <button type="button" class="mt-4 rounded-full border border-[#cfb98f] bg-[#efe2c8] px-4 py-2 text-sm font-bold text-[#6e542a] transition hover:bg-[#ead9bb]" @click="shareResult('legacy')">Share result</button>
                   </div>
                 </div>
               </div>
-            </div>
-          </article>
-
-          <article v-else class="overflow-hidden rounded-[2rem] border border-[#d1c3aa] bg-[#f3ead7] text-[#30261a] shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
-            <div class="border-b border-[#cfb98f] bg-[#efe2c8] px-8 py-6 md:px-10">
-              <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div class="grid gap-8 px-8 py-8 md:px-10 lg:grid-cols-[1.2fr_0.8fr]">
                 <div>
-                  <p class="text-xs font-extrabold uppercase tracking-[0.28em] text-[#7f5f2b]">The Build Naija Times</p>
-                  <h3 class="mt-2 font-display text-6xl font-semibold leading-none md:text-7xl">{{ endHeadline }}</h3>
-                  <p class="mt-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#7b6a53]">{{ activeCity.name }}, {{ activeMeta.state }} · Final edition · {{ startYear + totalRounds - 1 }}</p>
-                </div>
-                <div class="rounded-[1.4rem] border border-[#cfb98f] bg-[#fbf4e7] px-6 py-4 text-right">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#7f5f2b]">Civic grade</p>
-                  <p class="mt-1 font-display text-6xl leading-none">{{ endGrade }}</p>
-                  <p class="mt-2 text-lg font-semibold">Score {{ finalScore }}/100</p>
-                  <button type="button" class="mt-4 rounded-full border border-[#cfb98f] bg-[#efe2c8] px-4 py-2 text-sm font-bold text-[#6e542a] transition hover:bg-[#ead9bb]" @click="shareResult('legacy')">Share result</button>
-                </div>
-              </div>
-            </div>
-            <div class="grid gap-8 px-8 py-8 md:px-10 lg:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <p class="text-2xl font-semibold leading-10 text-[#4a3c29]">{{ state.currentVerdict }}</p>
-                <div class="mt-8 grid gap-4 md:grid-cols-3">
-                  <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
-                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">History says</p>
-                    <p class="mt-3 text-lg font-semibold leading-8">{{ buildHistoryMemory(finalScore, state.metrics) }}</p>
-                  </div>
-                  <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
-                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">You built up</p>
-                    <p class="mt-3 text-lg font-semibold leading-8">{{ legacyStrongest.map(prettyMetricName).join(' and ') }}</p>
-                  </div>
-                  <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
-                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">You neglected</p>
-                    <p class="mt-3 text-lg font-semibold leading-8">{{ legacyWeakest.map(prettyMetricName).join(' and ') }}</p>
-                  </div>
-                </div>
-                <div class="mt-8 rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Legacy summary</p>
-                  <ul class="mt-4 space-y-3 text-lg leading-8 text-[#443724]">
-                    <li v-for="bullet in legacyBullets" :key="bullet">• {{ bullet }}</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="space-y-4">
-                <div class="rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Final city ledger</p>
-                  <div class="mt-4 space-y-3">
-                    <div v-for="metric in renderedMetrics" :key="'ledger-' + metric.key" class="flex items-center justify-between border-b border-[#eadbc0] pb-2 text-lg last:border-b-0">
-                      <span>{{ metric.label }}</span>
-                      <strong>{{ clampMetric(state.metrics[metric.key]) }}</strong>
+                  <p class="text-2xl font-semibold leading-10 text-[#4a3c29]">{{ state.currentVerdict }}</p>
+                  <div class="mt-8 grid gap-4 md:grid-cols-3">
+                    <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
+                      <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">History says</p>
+                      <p class="mt-3 text-lg font-semibold leading-8">{{ buildHistoryMemory(finalScore, state.metrics) }}</p>
+                    </div>
+                    <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
+                      <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">You built up</p>
+                      <p class="mt-3 text-lg font-semibold leading-8">{{ legacyStrongest.map(prettyMetricName).join(' and ') }}</p>
+                    </div>
+                    <div class="rounded-[1.3rem] border border-[#d8c6a4] bg-[#fbf4e7] p-5">
+                      <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">You neglected</p>
+                      <p class="mt-3 text-lg font-semibold leading-8">{{ legacyWeakest.map(prettyMetricName).join(' and ') }}</p>
                     </div>
                   </div>
+                  <div class="mt-8 rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Legacy summary</p>
+                    <ul class="mt-4 space-y-3 text-lg leading-8 text-[#443724]">
+                      <li v-for="bullet in legacyBullets" :key="bullet">• {{ bullet }}</li>
+                    </ul>
+                  </div>
                 </div>
-                <div class="rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
-                  <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Key moments</p>
-                  <div class="mt-4 space-y-4">
-                    <div v-for="entry in recentHistory.slice(0, 4)" :key="'legacy-' + entry.round" class="border-l-2 border-[#b48d3f] pl-4">
-                      <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#8a6c39]">Year {{ entry.round }}</p>
-                      <p class="mt-1 text-lg font-semibold">{{ entry.alert.title }}</p>
-                      <p class="mt-1 text-sm leading-7 text-[#5d4d37]">{{ entry.verdict }}</p>
+                <div class="space-y-4">
+                  <div class="rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Final city ledger</p>
+                    <div class="mt-4 space-y-3">
+                      <div v-for="metric in renderedMetrics" :key="'ledger-' + metric.key" class="flex items-center justify-between border-b border-[#eadbc0] pb-2 text-lg last:border-b-0">
+                        <span>{{ metric.label }}</span>
+                        <strong>{{ clampMetric(state.metrics[metric.key]) }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="rounded-[1.5rem] border border-[#d8c6a4] bg-[#fbf4e7] p-6">
+                    <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7f5f2b]">Key moments</p>
+                    <div class="mt-4 space-y-4">
+                      <div v-for="entry in recentHistory.slice(0, 6)" :key="'legacy-' + entry.round" class="border-l-2 border-[#b48d3f] pl-4">
+                        <p class="text-sm font-extrabold uppercase tracking-[0.14em] text-[#8a6c39]">Year {{ entry.round }}</p>
+                        <p class="mt-1 text-lg font-semibold">{{ entry.alert.title }}</p>
+                        <p v-if="entry.event && entry.event.choice" class="mt-0.5 text-xs font-semibold text-[#8a6c39]">Chose: {{ entry.event.choice }}</p>
+                        <p class="mt-1 text-sm leading-7 text-[#5d4d37]">{{ entry.verdict }}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </article>
-        </section>
-      </main>
+            </article>
+          </section>
+        </main>
 
-      <footer v-if="!state.gameOver" class="fixed bottom-0 left-0 right-0 border-t border-line bg-[#32312d]/95 backdrop-blur">
-        <div class="mx-auto flex w-[min(1440px,100vw)] items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <p class="text-lg font-semibold text-[#e6dfd2]">{{ selectionStatus }}</p>
+        <footer v-if="!state.gameOver" class="fixed bottom-0 left-0 right-0 border-t border-line bg-[#32312d]/95 backdrop-blur">
+          <div class="mx-auto flex w-[min(1440px,100vw)] items-center justify-between gap-4 px-6 py-5">
+            <div>
+              <p class="text-lg font-semibold text-[#e6dfd2]">{{ selectionStatus }}</p>
+            </div>
+            <button
+              type="button"
+              class="rounded-3xl border border-[#6c6a65] bg-transparent px-10 py-4 text-2xl font-semibold text-[#faf7f1] transition hover:border-[#908d86] hover:bg-[#3a3935] disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="state.gameOver || state.awaitingEventChoice"
+              @click="advanceRound"
+            >
+              {{ state.awaitingEventChoice ? 'Respond to the event above ↑' : 'End year ↗' }}
+            </button>
           </div>
-          <button
-            type="button"
-            class="rounded-3xl border border-[#6c6a65] bg-transparent px-10 py-4 text-2xl font-semibold text-[#faf7f1] transition hover:border-[#908d86] hover:bg-[#3a3935] disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="state.gameOver"
-            @click="advanceRound"
-          >
-            {{ state.gameOver ? 'Campaign complete' : 'End year ↗' }}
-          </button>
-        </div>
-      </footer>
+        </footer>
       </div>
     </div>
   `,
